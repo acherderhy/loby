@@ -36,6 +36,21 @@ function lireDonnee(cle, valeurParDefaut) {
 }
 
 /**
+ * Lit une donnée qui doit être une liste (utilisateurs, posts).
+ * @param {string} cle - Le nom de la donnée dans le localStorage.
+ * @returns {Array} La liste lue, ou une liste vide si la donnée n'existe pas ou n'est pas une liste.
+ */
+function lireListe(cle) {
+  const donnee = lireDonnee(cle, []);
+  // SÉCURITÉ : le localStorage peut contenir du JSON valide mais de la mauvaise forme
+  // (par exemple {"a":1} écrit à la main avec F12). Sans ce contrôle, les boucles sur la liste planteraient.
+  if (!Array.isArray(donnee)) {
+    return [];
+  }
+  return donnee;
+}
+
+/**
  * Enregistre une donnée dans le localStorage, transformée en texte JSON.
  * @param {string} cle - Le nom de la donnée dans le localStorage.
  * @param {*} valeur - La donnée à enregistrer (liste ou objet).
@@ -60,7 +75,7 @@ function enregistrerDonnee(cle, valeur) {
  * @returns {Array<Object>} Liste de { id, pseudo, sel, hachage, avatar, dateCreation } (avatar : "" ou data URL).
  */
 function lireUtilisateurs() {
-  return lireDonnee(CLE_UTILISATEURS, []);
+  return lireListe(CLE_UTILISATEURS);
 }
 
 /**
@@ -93,7 +108,7 @@ function enregistrerAvatar(idUtilisateur, avatar) {
  * @returns {Array<Object>} Liste de { id, auteurId, texte, image, date, likes } (image : "" ou data URL).
  */
 function lirePosts() {
-  return lireDonnee(CLE_POSTS, []);
+  return lireListe(CLE_POSTS);
 }
 
 /**

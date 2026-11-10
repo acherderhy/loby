@@ -10,7 +10,29 @@ Les données (photos comprises) sont enregistrées dans le `localStorage` du nav
 L'objectif du projet est d'appliquer les **bonnes pratiques de sécurité web** : hachage des mots de passe,
 protection contre le XSS, Content-Security-Policy, validation des saisies, contrôle d'autorisation.
 
-Le cadrage complet (objectifs, limites, choix techniques, répartition) est dans [cadrage.md](cadrage.md).
+**Site en ligne :** <https://acherderhy.github.io/loby/> (activation prévue)
+
+## Documents
+
+- [cadrage.md](cadrage.md) : objectifs, rôles, limites, choix techniques et répartition du travail.
+- [SECURITE.md](SECURITE.md) : toutes les protections, l'attaque bloquée par chacune, l'audit de sécurité et les limites.
+- [prompts/](prompts/) : les prompts donnés à Claude Code à chaque étape du projet.
+
+## Fonctionnalités
+
+1. **Comptes**
+   - Créer un compte avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 à 64 caractères).
+   - Se connecter, se déconnecter.
+   - Ajouter une photo de profil (facultative) à l'inscription, ou la changer depuis le fil en cliquant sur son avatar.
+     Sans photo, l'avatar affiche l'initiale du pseudo.
+2. **Posts**
+   - Publier une photo, un texte (280 caractères maximum) ou les deux.
+   - Supprimer **ses propres** posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler).
+3. **Fil d'actualité**
+   - Voir les posts de tous les comptes, **les plus récents en haut**.
+   - Liker un post, ou retirer son like.
+
+> Comme il n'y a pas de serveur, « tous les comptes » signifie « tous les comptes créés dans ce navigateur ».
 
 ## Lancer le site en local
 
@@ -45,15 +67,20 @@ loby/
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons et site.webmanifest.
 ├── assets/README-logo.md   Documentation du kit logo.
+├── prompts/            Prompts donnés à Claude Code à chaque étape.
 ├── cadrage.md          Document de cadrage.
+├── SECURITE.md         Protections, audit de sécurité et limites.
 ├── CLAUDE.md           Règles du projet (simplicité, documentation, sécurité).
 └── README.md           Ce fichier.
 ```
 
-## À compléter à la fin du projet
+## Équipe
 
-- [ ] Fonctionnalités : comment s'inscrire, publier, liker, supprimer.
-- [ ] Sécurité : liste des protections appliquées et de l'attaque bloquée par chacune.
-- [ ] Limites connues (voir la section 4 de `cadrage.md`).
-- [ ] Lien vers le site publié sur GitHub Pages.
-- [ ] Équipe : Membre 1, Membre 2, Membre 3, Membre 4.
+| Membre | Responsabilité | Fichiers |
+|---|---|---|
+| **Membre 1** | Comptes et hachage des mots de passe | `js/hachage.js`, `js/comptes.js` |
+| **Membre 2** | Posts, contrôle d'autorisation et sécurité des photos | `js/posts.js`, `js/images.js` |
+| **Membre 3** | Fil d'actualité, likes, interface et anti-XSS | `js/fil.js`, `css/style.css`, `fil.html` |
+| **Membre 4** | CSP, validation des saisies, documentation | `js/validation.js`, `index.html`, `README.md`, `cadrage.md`, `SECURITE.md` |
+
+Le fichier `js/stockage.js` est commun aux 4 membres.

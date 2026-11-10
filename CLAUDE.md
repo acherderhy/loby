@@ -30,7 +30,8 @@ loby/
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons + site.webmanifest (chemins relatifs).
 ├── assets/README-logo.md
-├── CLAUDE.md, cadrage.md, README.md, .gitignore
+├── prompts/            Prompts donnés à Claude Code à chaque étape (+ README.md).
+├── CLAUDE.md, cadrage.md, README.md, SECURITE.md, .gitignore
 ```
 
 Ordre de chargement des scripts (en bas du `<body>`, avec `<script src="...">` uniquement) :
@@ -90,7 +91,8 @@ Hors périmètre : plusieurs photos par post, vidéos, abonnements, messages pri
 
 ### Mots de passe
 - Jamais stockés en clair : **PBKDF2 avec la Web Crypto API** (`crypto.subtle`), hash SHA-256,
-  **un sel aléatoire par utilisateur** (16 octets, `crypto.getRandomValues`), **au moins 100 000 itérations**.
+  **un sel aléatoire par utilisateur** (16 octets, `crypto.getRandomValues`), **600 000 itérations** (recommandation OWASP pour PBKDF2-SHA256).
+- Comparaison des hachages **en temps constant** (`comparerEnTempsConstant` dans `comptes.js`), jamais avec `===`.
 - On stocke uniquement : pseudo, sel, hash (encodés en texte, ex : hexadécimal).
 
 ### Anti-XSS

@@ -1,0 +1,86 @@
+# Sécurité de Loby
+
+Loby fonctionne **entièrement dans le navigateur**, sans serveur : toutes les protections sont donc appliquées
+côté client, en HTML, en JavaScript et par la Content-Security-Policy. Nous avons cherché à superposer plusieurs
+barrières (validation HTML **et** JS, CSP **et** `textContent`…) et à documenter honnêtement ce qu'un site sans backend ne peut pas protéger.
+
+## 1. Tableau des protections
+
+Chaque ligne correspond à un commentaire `SÉCURITÉ :` dans le code.
+
+| Protection | Attaque bloquée | Fichier | Fonction | Membre responsable |
+|---|---|---|---|---|
+| Content-Security-Policy stricte (`default-src 'self'`, `script-src 'self'`, `style-src 'self'`, `img-src 'self' data:`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`) | XSS (script injecté refusé par le navigateur), chargement de ressources externes, plugins, détournement par `<base>`, envoi de formulaire vers un autre site | `index.html`, `fil.html` | balise `<meta http-equiv>` | Membre 4 |
+| `<meta name="referrer" content="no-referrer">` | Fuite de l'adresse de nos pages vers d'autres sites (en-tête Referer) | `index.html`, `fil.html` | balise `<meta>` | Membre 4 |
+| JavaScript uniquement en fichiers `.js`, événements branchés avec `addEventListener` (aucun `onclick`, aucun `<script>` inline) | XSS : rend possible une CSP sans `'unsafe-inline'` | `js/comptes.js`, `js/fil.js` | `brancherFormulaires`, `brancherEvenements` | Membre 1, Membre 3 |
+| Styles uniquement dans `css/style.css` (aucun `style="..."`) | Injection de CSS pour maquiller la page (faux bouton, faux formulaire) | `css/style.css` | — | Membre 3 |
+| Texte affiché avec `textContent`, DOM construit avec `createElement`, jamais `innerHTML` | XSS stocké : un post contenant `<img src=x onerror=...>` s'affiche comme du texte | `js/fil.js`, `js/comptes.js` | `creerTextePost`, `afficherMessageFil`, `afficherMessage` | Membre 3, Membre 1 |
+| Validation des saisies en HTML (`required`, `minlength`, `maxlength`, `pattern`) | Saisies hors règles (première barrière) | `index.html`, `fil.html` | formulaires | Membre 4 |
+| Re-vérification des saisies en JavaScript (pseudo, mot de passe, post de 280 caractères, post vide refusé) | Contournement des attributs HTML avec F12 ou appel direct depuis la console | `js/validation.js`, `js/comptes.js`, `js/posts.js` | `pseudoEstValide`, `motDePasseEstValide`, `contenuPostEstValide`, `verifierSaisieInscription`, `trouverUtilisateurAvecIdentifiants`, `publierPost` | Membre 4 (règles), Membre 1, Membre 2 |
+| Mot de passe haché avec PBKDF2-SHA256, **600 000 itérations** (Web Crypto API) | Lecture des mots de passe en clair ; force brute hors ligne fortement ralentie | `js/hachage.js` | `hacherMotDePasse` | Membre 1 |
+| Sel aléatoire de 16 octets par utilisateur (`crypto.getRandomValues`) | Tables précalculées (rainbow tables) ; deux mots de passe identiques donnent des hash différents | `js/hachage.js` | `genererSel` | Membre 1 |
+| Comparaison des hachages en temps constant (boucle complète avec XOR) | Attaque temporelle : deviner le hash d'après la durée de la comparaison | `js/comptes.js` | `comparerEnTempsConstant` | Membre 1 |
+| Hachage factice quand le pseudo n'existe pas | Énumération des comptes par la mesure du temps de réponse | `js/comptes.js` | `trouverUtilisateurAvecIdentifiants` | Membre 1 |
+| Message d'erreur unique « Identifiants incorrects » | Énumération des comptes (savoir quels pseudos existent) | `js/comptes.js` | `signalerEchec` (constante `MESSAGE_ECHEC`) | Membre 1 |
+| Blocage de la connexion 30 secondes après 5 échecs | Force brute en ligne (essais de mots de passe à la chaîne) | `js/comptes.js` | `enregistrerEchec`, `connexionEstBloquee` | Membre 1 |
+| Pseudo unique sans tenir compte des majuscules | Usurpation par un pseudo presque identique (`Testeur_1` / `testeur_1`) | `js/stockage.js` | `trouverUtilisateurParPseudo` | Commun |
+| Session : seul l'identifiant de l'utilisateur est gardé, dans le `sessionStorage` | Vol du mot de passe ou du hash via la session ; session qui traîne après fermeture de l'onglet | `js/stockage.js` | `ouvrirSession` | Commun |
+| Redirection vers `index.html` sans session valide | Accès au fil sans être connecté | `js/fil.js` | `demarrerFil` | Membre 3 |
+| Contrôle d'autorisation avant la suppression (l'utilisateur doit être l'auteur) | Suppression du post d'un autre (bouton caché contourné via la console) | `js/posts.js` | `supprimerPost` | Membre 2 |
+| Attribut `accept` + liste blanche des types (JPEG, PNG, WebP) | Envoi d'un SVG piégé (contenant du JavaScript) ou d'un autre type de fichier | `index.html`, `fil.html`, `js/images.js` | `typeDeclareEstAutorise` | Membre 2 |
+| Vérification des premiers octets du fichier (signature) | Fichier déguisé (texte ou script renommé en `.jpg`) | `js/images.js` | `signatureEstValide` | Membre 2 |
+| Taille maximale de 5 Mo vérifiée avant tout traitement | Fichier énorme qui bloque le navigateur | `js/images.js` | `verifierFichierImage` | Membre 2 |
+| Redessin dans un `<canvas>` puis export JPEG (avatar 128×128, post 800 px max) | Fuite de métadonnées EXIF (position GPS, téléphone) ; contenu caché dans le fichier | `js/images.js` | `dessinerAvatar`, `dessinerImagePost` | Membre 2 |
+| Vérification que l'image est une data URL `data:image/jpeg;base64,` avant enregistrement et affichage | Image remplacée à la main dans le `localStorage` par un SVG piégé ou une adresse externe | `js/images.js`, `js/posts.js` | `imageEstSure`, `creerElementImage`, `publierPost` | Membre 2 |
+| `JSON.parse` dans un `try/catch`, et contrôle que les utilisateurs et les posts sont bien des listes | Plantage du site après une modification du `localStorage` (JSON invalide, ou valide mais de mauvaise forme comme `{"a":1}`) | `js/stockage.js` | `lireDonnee`, `lireListe` | Commun |
+| Erreur `QuotaExceededError` rattrapée, message « Stockage plein : supprimez d'anciens posts. » | Plantage et perte silencieuse de données quand le stockage est plein | `js/stockage.js` | `enregistrerDonnee` | Commun |
+
+## 2. Audit de sécurité
+
+Nous avons lancé **`/security-review`**, l'outil d'audit de sécurité par IA intégré à Claude Code, sur l'ensemble du code.
+
+**Résultat : aucune faille exploitable de gravité haute ou moyenne.**
+
+L'outil a examiné puis écarté 8 pistes. Nous les avons relues une par une :
+
+| # | Piste examinée | Décision et raison |
+|---|---|---|
+| 1 | PBKDF2 avec 100 000 itérations | **Corrigé** : passé à 600 000 itérations, la valeur recommandée par l'OWASP pour PBKDF2-SHA256. Le hachage reste sous la seconde. |
+| 2 | Comparaison des hachages avec `===` | **Corrigé** : `comparerEnTempsConstant` parcourt toujours tout le hash, la durée ne révèle plus rien. Le risque réel était faible (le hash est de toute façon lisible dans le `localStorage`), mais la correction est simple et c'est la bonne pratique. |
+| 3 | `localStorage` contenant du JSON valide mais de la mauvaise forme | **Corrigé** : `lireListe` renvoie une liste vide si la donnée n'est pas une liste. Il s'agissait d'un plantage, pas d'une faille exploitable. |
+| 4 | Blocage des tentatives contournable avec les outils du navigateur | **Limite assumée** : le compteur est stocké dans le navigateur, que l'utilisateur contrôle. Le blocage ralentit une attaque depuis l'interface ; un vrai blocage demande un serveur. |
+| 5 | Session falsifiable via le `sessionStorage` | **Limite assumée** : on peut écrire l'identifiant d'un autre compte dans son propre navigateur. Sans serveur, rien ne peut l'empêcher ; cela ne donne accès qu'aux données déjà présentes dans ce même navigateur. |
+| 6 | Hachages et sels lisibles dans le `localStorage` | **Limite assumée** : c'est la seule façon de vérifier un mot de passe sans serveur. C'est pour cela que nous utilisons PBKDF2 avec un sel et beaucoup d'itérations : le hash ne redonne pas le mot de passe directement. |
+| 7 | Clickjacking impossible à bloquer avec une CSP en `<meta>` | **Limite assumée** : la directive `frame-ancestors` est ignorée dans une balise `<meta>`, et GitHub Pages ne permet pas d'ajouter les en-têtes HTTP qui la porteraient. |
+| 8 | `localStorage` partagé entre tous les dépôts d'un même compte `github.io` | **Limite assumée** : tous les sites `acherderhy.github.io/...` ont la même origine, donc le même `localStorage`. Un autre dépôt du même compte pourrait lire nos données. Solution en production : un domaine dédié. |
+
+Les pistes 4 à 8 ne sont pas des erreurs de code : ce sont des conséquences directes de la contrainte « pas de backend ».
+
+## 3. Limites et ce qu'il faudrait en production
+
+Résumé de la section 4 de [cadrage.md](cadrage.md), qui détaille chaque point :
+
+- **Sans serveur, le navigateur a le dernier mot** : les données sont lisibles et modifiables avec F12, et le contrôle
+  d'autorisation, la limitation des tentatives et la session peuvent être contournés par quelqu'un qui manipule son propre navigateur.
+- **Pas de vrai réseau social** : chaque navigateur a ses propres comptes et posts.
+- **Stockage limité** à environ 5 Mo, photos comprises.
+- **CSP limitée** : pas de protection contre le clickjacking.
+
+En production, il faudrait :
+- un **serveur** et une **base de données** ;
+- le **hachage côté serveur** avec Argon2id ou bcrypt ;
+- une **session par cookie** `HttpOnly`, `Secure`, `SameSite` ;
+- le **contrôle d'autorisation et la limitation des tentatives côté serveur** (par compte et par adresse IP) ;
+- des **en-têtes HTTP de sécurité** (CSP avec `frame-ancestors`, `Strict-Transport-Security`, `X-Content-Type-Options`) ;
+- le **stockage des images sur un serveur**, avec vérifications côté serveur ;
+- des **journaux** pour détecter les attaques, et HTTPS partout.
+
+## 4. Comment nous avons utilisé l'IA
+
+- **Claude Code** a écrit le code, étape par étape, à partir de nos consignes.
+- Un fichier **[CLAUDE.md](CLAUDE.md)** impose à chaque étape les règles du projet : simplicité (niveau Bachelor 3),
+  documentation, et toutes les règles de sécurité ci-dessus (CSP, pas d'`innerHTML`, PBKDF2, validation HTML + JS…).
+- Les **prompts** donnés à chaque étape sont conservés dans le dossier [prompts/](prompts/).
+- Un **audit automatique** avec `/security-review` a été lancé sur le code terminé (section 2).
+- Chaque résultat a ensuite été **relu et trié par nous** : nous avons décidé quoi corriger, quoi documenter comme limite,
+  et chaque membre doit pouvoir expliquer chaque ligne de son code.

@@ -8,10 +8,10 @@
   il ne voit qu'un hash, dont on ne peut pas remonter au mot de passe.
 */
 
-// SÉCURITÉ : PBKDF2 répète le calcul 100 000 fois. Pour nous c'est imperceptible (une fraction de seconde),
-// mais un attaquant qui essaie des millions de mots de passe (attaque par force brute ou par dictionnaire)
-// est ralenti d'autant.
-const NOMBRE_ITERATIONS = 100000;
+// SÉCURITÉ : PBKDF2 répète le calcul 600 000 fois (recommandation de l'OWASP pour PBKDF2-SHA256).
+// Plus il y a d'itérations, plus chaque essai coûte cher à un attaquant qui teste des millions de mots de passe
+// (force brute ou dictionnaire). Pour l'utilisateur, cela reste une fraction de seconde à la connexion.
+const NOMBRE_ITERATIONS = 600000;
 
 /**
  * Génère un sel : 16 octets aléatoires, différents pour chaque utilisateur.
@@ -55,7 +55,7 @@ function hexaVersOctets(texte) {
 }
 
 /**
- * Calcule le hash PBKDF2 (SHA-256, 100 000 itérations) d'un mot de passe avec un sel.
+ * Calcule le hash PBKDF2 (SHA-256, 600 000 itérations) d'un mot de passe avec un sel.
  * « async » : la fonction renvoie une promesse, car le navigateur fait le calcul sans bloquer la page.
  * « await » : attend que le calcul soit terminé avant de passer à la ligne suivante.
  * @param {string} motDePasse - Le mot de passe en clair.

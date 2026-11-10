@@ -168,6 +168,29 @@ function reinitialiserTentatives() {
 }
 
 /**
+ * Compare deux textes en parcourant toujours tous leurs caractères (durée identique qu'ils soient égaux ou non).
+ * @param {string} a - Le premier texte (hash calculé).
+ * @param {string} b - Le second texte (hash stocké).
+ * @returns {boolean} true si les deux textes sont identiques.
+ */
+function comparerEnTempsConstant(a, b) {
+  // La longueur n'est pas un secret : tous nos hash font 64 caractères.
+  if (a.length !== b.length) {
+    return false;
+  }
+  // SÉCURITÉ : anti attaque temporelle. Un === s'arrête dès le premier caractère différent : il répond un peu
+  // plus vite quand le début est faux. En mesurant ces durées, un attaquant pourrait deviner le hash morceau
+  // par morceau. Ici, on parcourt TOUTES les positions sans jamais s'arrêter avant la fin.
+  let differences = 0;
+  for (let i = 0; i < a.length; i++) {
+    // ^ (XOR) donne 0 si les deux caractères sont identiques, autre chose sinon.
+    // | (OU) garde la trace de toute différence rencontrée : differences ne revient jamais à 0.
+    differences = differences | (a.charCodeAt(i) ^ b.charCodeAt(i));
+  }
+  return differences === 0;
+}
+
+/**
  * Vérifie un mot de passe : on le hache avec le sel de l'utilisateur et on compare au hash stocké.
  * @param {Object} utilisateur - L'utilisateur (avec son sel et son hachage).
  * @param {string} motDePasse - Le mot de passe saisi.
@@ -175,7 +198,7 @@ function reinitialiserTentatives() {
  */
 async function verifierMotDePasse(utilisateur, motDePasse) {
   const hachage = await hacherMotDePasse(motDePasse, hexaVersOctets(utilisateur.sel));
-  return hachage === utilisateur.hachage;
+  return comparerEnTempsConstant(hachage, utilisateur.hachage);
 }
 
 /**

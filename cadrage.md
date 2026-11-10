@@ -27,7 +27,8 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 - **Déconnexion**.
 - **Photo de profil** facultative : choisie à l'inscription, modifiable depuis le fil en cliquant sur son avatar.
   Sans photo, l'avatar affiche l'initiale du pseudo (en CSS, sans image).
-- Protections : mot de passe haché avec PBKDF2 + sel aléatoire ; message d'erreur générique
+- Protections : mot de passe haché avec PBKDF2 (600 000 itérations) + sel aléatoire ; hachages comparés
+  en temps constant (contre les attaques temporelles) ; message d'erreur générique
   « Identifiants incorrects » ; blocage de 30 secondes après 5 échecs ; seul l'identifiant
   de l'utilisateur est gardé en session.
 
@@ -73,7 +74,7 @@ de l'utilisateur**, et celui-ci en a le contrôle total. Concrètement :
 - **La limitation des tentatives est contournable** : il suffit de vider le stockage ou de rouvrir le navigateur
   pour remettre le compteur à zéro.
 - **Les mots de passe hachés sont accessibles** : le hash et le sel sont lisibles dans le `localStorage`.
-  Un attaquant peut tenter de deviner le mot de passe hors ligne ; PBKDF2 avec 100 000 itérations
+  Un attaquant peut tenter de deviner le mot de passe hors ligne ; PBKDF2 avec 600 000 itérations
   **ralentit** fortement cette attaque, mais ne l'empêche pas pour un mot de passe faible.
 - **Pas de vrai réseau social** : chaque navigateur a son propre `localStorage`. « Tous les comptes »
   signifie donc « tous les comptes créés dans ce navigateur ». Deux personnes sur deux ordinateurs ne se voient pas.
