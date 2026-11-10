@@ -114,10 +114,9 @@ La v2 réutilise `css/style.css`, `assets/`, `js/validation.js` et `js/images.js
 
 ## Utilisation de l'IA
 
-Le projet a été construit avec **Claude Code**. Le fichier [CLAUDE.md](CLAUDE.md) lui impose à chaque modification
+Le projet a été construit principalement avec **Claude Code**. Le fichier [CLAUDE.md](CLAUDE.md) lui impose à chaque modification
 les règles de simplicité, de documentation et de sécurité. Les prompts de chaque étape sont conservés dans [prompts/](prompts/).
 Un audit automatique avec **`/security-review`** a été lancé sur le code terminé (voir [SECURITE.md](SECURITE.md)).
-Chaque membre doit pouvoir expliquer son code à l'oral.
 
 ## Documents
 
