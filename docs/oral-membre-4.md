@@ -15,9 +15,11 @@ puis en JavaScript, et je documente le projet, ses protections et ses limites.
 4. On n'utilise aucune ressource externe, ni CDN ni Google Fonts, et on ajoute `no-referrer` pour ne jamais envoyer l'adresse de nos pages à d'autres sites.
 5. Pour les saisies, on a les règles dans le HTML avec `required`, `minlength`, `maxlength` et `pattern`, mais ça se supprime en deux secondes avec F12.
 6. C'est pour ça que je revérifie exactement les mêmes règles en JavaScript dans `validation.js`, avant tout enregistrement.
-7. Enfin, j'ai rédigé le cadrage et le fichier SECURITE.md, qui expliquent honnêtement ce qu'un site sans serveur ne peut pas protéger.
-8. Dans la version 2 branchée sur Supabase, les données sont partagées entre tous les utilisateurs au lieu de rester dans un seul navigateur.
-9. Et la sécurité y est vérifiée par le serveur grâce aux règles RLS, que l'utilisateur ne peut pas contourner depuis son navigateur.
+7. Notre projet s'est construit en deux temps : la v1 fonctionne sans backend, pour qu'on maîtrise la sécurité côté navigateur, et j'ai rédigé le cadrage et SECURITE.md qui expliquent honnêtement ses limites.
+8. L'audit a montré ces limites : sans serveur, tout est lisible et modifiable avec F12, et chaque navigateur a ses propres comptes.
+9. C'est pourquoi la v2, la version finale, ajoute un backend, Supabase, que le prof a autorisé : les données sont partagées entre tous les utilisateurs.
+10. Et la sécurité y est vérifiée par le serveur grâce aux règles RLS, que l'utilisateur ne peut pas contourner depuis son navigateur.
+11. Conclusion : la v1 nous a appris les barrières côté navigateur, la v2 y ajoute celle que l'utilisateur ne contrôle pas, celle du serveur.
 
 ## Le code à montrer
 

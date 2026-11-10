@@ -3,9 +3,15 @@
 <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="64">
 
 **Loby** est un mini réseau social type Twitter, réalisé en groupe de 4 dans le cadre d'un cours
-mêlant développement, IA et cybersécurité. Il fonctionne **entièrement dans le navigateur** :
-HTML, CSS et JavaScript vanilla, sans backend, sans framework et sans librairie externe.
-Les données (photos comprises) sont enregistrées dans le `localStorage` du navigateur.
+mêlant développement, IA et cybersécurité. Il est écrit en HTML, CSS et JavaScript vanilla,
+sans framework et sans librairie externe.
+
+Le projet a été construit **en deux temps** :
+1. **La v1 (à la racine)** fonctionne sans backend, pour maîtriser la sécurité côté navigateur.
+   Les données (photos comprises) sont enregistrées dans le `localStorage` du navigateur.
+2. **L'audit a montré les limites de la v1** : tout est modifiable depuis le navigateur, et chaque navigateur a ses propres comptes.
+3. **La v2 (dossier `v2/`) est la version finale** : elle ajoute un backend (Supabase), autorisé par le prof,
+   pour partager les données entre tous les utilisateurs et faire vérifier la sécurité par le serveur.
 
 L'objectif du projet est d'appliquer les **bonnes pratiques de sécurité web** : hachage des mots de passe,
 protection contre le XSS, Content-Security-Policy, validation des saisies, contrôle d'autorisation.
@@ -37,7 +43,7 @@ protection contre le XSS, Content-Security-Policy, validation des saisies, contr
 Navigation : un menu **Fil / Profil** (dans l'en-tête sur ordinateur, en barre d'onglets en bas de l'écran sur téléphone)
 et un bouton rond « + » toujours visible pour publier.
 
-> Comme il n'y a pas de serveur, « tous les comptes » signifie « tous les comptes créés dans ce navigateur ».
+> Dans la v1, comme il n'y a pas de serveur, « tous les comptes » signifie « tous les comptes créés dans ce navigateur ». La v2 corrige cette limite.
 
 ## Lancer le site en local
 
@@ -79,18 +85,18 @@ loby/
 ├── assets/README-logo.md   Documentation du kit logo.
 ├── prompts/            Prompts donnés à Claude Code à chaque étape.
 ├── docs/               Fiches d'oral (une par membre) et scénario de démo commun.
-├── v2/                 Version 2 (bonus) avec Supabase.
+├── v2/                 Version 2 (version finale) avec Supabase.
 ├── cadrage.md          Document de cadrage.
 ├── SECURITE.md         Protections, audit de sécurité et limites.
 ├── CLAUDE.md           Règles du projet (simplicité, documentation, sécurité).
 └── README.md           Ce fichier.
 ```
 
-## Version 2 (bonus) : données partagées avec Supabase
+## Version 2 (version finale) : données partagées avec Supabase
 
-Le dossier [v2/](v2/) contient une seconde version de Loby, branchée sur **Supabase** (base de données hébergée) :
-tous les utilisateurs partagent les mêmes posts, photos et likes. La version principale ci-dessus reste inchangée
-et respecte la consigne « pas de backend ».
+Le dossier [v2/](v2/) contient la version finale de Loby, branchée sur **Supabase** (base de données hébergée),
+un backend autorisé par le prof : tous les utilisateurs partagent les mêmes posts, photos et likes.
+La v1 ci-dessus reste inchangée : elle montre ce que l'on peut protéger sans backend, et ses limites.
 
 - **En ligne :** <https://acherderhy.github.io/loby/v2/>
 - Même interface, mêmes règles de saisie et de photos (`js/validation.js` et `js/images.js` réutilisés sans copie).

@@ -37,7 +37,7 @@ loby/
 ├── assets/README-logo.md
 ├── prompts/            Prompts donnés à Claude Code à chaque étape (+ README.md).
 ├── docs/               Fiches d'oral (oral-membre-1.md à oral-membre-4.md) et scénario de démo (demo.md).
-├── v2/                 BONUS : version 2 branchée sur Supabase (ne pas toucher à la v1 pour la v2).
+├── v2/                 VERSION FINALE : version 2 branchée sur Supabase (ne pas toucher à la v1 pour la v2).
 │   ├── index.html, fil.html, publier.html, profil.html   Mêmes pages, CSP + connect-src vers Supabase, bandeau « Version 2 ».
 │   ├── js/config.js    SUPABASE_URL et clé anon (publique). Jamais la clé service_role.
 │   ├── js/supabase.js  Session (jeton) + fonctions fetch : inscrire, connecter, deconnecter, lire, ajouter, supprimer, modifier.
@@ -65,9 +65,12 @@ Limites : **4 pages HTML, 1 fichier CSS, 10 fichiers JS maximum** (v2 : 4 pages 
 
 ## 3. Contraintes du prof (non négociables)
 
-- **Pas de backend** : uniquement HTML, CSS et JavaScript vanilla exécutés dans le navigateur.
+- **Deux temps** : la v1 (racine) fonctionne sans backend, pour maîtriser la sécurité côté navigateur ; l'audit en a montré
+  les limites ; la v2 (`v2/`) ajoute un backend (Supabase), autorisé par le prof, pour partager les données et faire
+  vérifier la sécurité par le serveur. La v2 est la version finale.
+- **Langages** : uniquement HTML, CSS et JavaScript vanilla exécutés dans le navigateur (la v1 reste sans backend).
 - **Aucun framework, aucune librairie externe, aucun CDN**, aucune police externe (pas de Google Fonts).
-- Données stockées dans le navigateur : **localStorage** (données) et **sessionStorage** (session).
+- Données de la v1 stockées dans le navigateur : **localStorage** (données) et **sessionStorage** (session). La v2 les stocke dans Supabase.
 - **Aucune donnée personnelle réelle** dans le dépôt : pas de vrais noms, emails ou mots de passe,
   même dans des exemples, des tests ou des données de démo (seule exception : les prénoms de l'équipe, voir section 9).
 - Un fichier `cadrage.md` et un fichier `README.md` à la racine.

@@ -5,6 +5,10 @@
 **Loby** est un mini réseau social inspiré de Twitter : on crée un compte, on publie des messages courts
 (280 caractères maximum) et on lit les messages de tout le monde dans un fil d'actualité, où l'on peut « liker ».
 
+Le projet a été construit **en deux temps**. La **v1** fonctionne sans backend, pour maîtriser la sécurité côté navigateur.
+L'audit a montré ses limites (section 4). La **v2** ajoute un backend (Supabase), autorisé par le prof, pour partager
+les données et faire vérifier la sécurité par le serveur : c'est la version finale.
+
 L'objectif est avant tout **pédagogique** : construire une application web simple en appliquant
 les bonnes pratiques de sécurité côté navigateur (hachage des mots de passe, protection contre le XSS,
 Content-Security-Policy, validation des saisies, contrôle d'autorisation…), et être capable
@@ -68,8 +72,8 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 
 ## 4) Ce qu'on ne fait pas aujourd'hui, et pourquoi
 
-### Pas de backend : la sécurité côté navigateur a des limites
-C'est une contrainte du projet. Sans serveur, **tout le code et toutes les données sont dans le navigateur
+### Limites de la v1 (sans backend) : la sécurité côté navigateur a des limites
+La v1 a été faite volontairement sans backend. Sans serveur, **tout le code et toutes les données sont dans le navigateur
 de l'utilisateur**, et celui-ci en a le contrôle total. Concrètement :
 
 - **Les données sont lisibles et modifiables** : n'importe qui ayant accès à l'ordinateur peut ouvrir les outils
@@ -88,7 +92,11 @@ de l'utilisateur**, et celui-ci en a le contrôle total. Concrètement :
   comme `frame-ancestors` (protection contre le *clickjacking*, quand un site malveillant affiche le nôtre
   dans un cadre invisible). GitHub Pages ne permet pas de configurer les en-têtes HTTP qui le feraient.
 
-**Ce qu'il faudrait en production :**
+**La v2 corrige ces limites** : avec Supabase, le serveur a le dernier mot (règles RLS, mots de passe hachés et gardés par le serveur,
+limitation des tentatives côté serveur, session par jeton signé, données et photos partagées entre tous les utilisateurs).
+Le détail est dans la section 4 de [SECURITE.md](SECURITE.md).
+
+**Ce qu'il faudrait en production (et que la v2 apporte en partie) :**
 - un **serveur** et une **base de données** : les données ne seraient plus modifiables par l'utilisateur ;
 - le **hachage des mots de passe côté serveur**, avec un algorithme conçu pour ça (Argon2id ou bcrypt) ;
 - une **session par cookie** `HttpOnly`, `Secure` et `SameSite` (illisible par JavaScript, donc protégée en cas de XSS) ;
@@ -97,14 +105,14 @@ de l'utilisateur**, et celui-ci en a le contrôle total. Concrètement :
   `Strict-Transport-Security` (HTTPS obligatoire), `X-Content-Type-Options` ;
 - des **journaux** pour détecter les attaques, et du HTTPS partout.
 
-### Photos : la limite du localStorage
+### Photos : la limite du localStorage (v1)
 Les photos sont gardées dans le `localStorage`, sous forme de texte (« data URL »). Or le `localStorage` est limité
 à **environ 5 Mo par site**, pour toutes les données réunies (comptes, posts, likes **et** photos). Même réduites
 et compressées (avatar de 128×128, photo de post de 800 pixels de large en JPEG), une photo de post pèse souvent
 50 à 150 Ko : quelques dizaines de photos suffisent à remplir le stockage. Le site affiche alors
 « Stockage plein : supprimez d'anciens posts. ».
 
-**Dans une vraie application**, les images seraient stockées sur un **serveur** (un service de stockage de fichiers,
+**Dans une vraie application** (et dans la v2, où les photos sont stockées dans la base), les images seraient stockées sur un **serveur** (un service de stockage de fichiers,
 souvent derrière un CDN qui les distribue rapidement), et la base de données ne garderait que leur adresse. Cela permet :
 - de ne pas être limité à quelques Mo, et de partager les photos entre tous les utilisateurs ;
 - de faire les vérifications **côté serveur** (type, signature, taille, ré-encodage, antivirus), là où l'utilisateur

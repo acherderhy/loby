@@ -1,8 +1,11 @@
 # Sécurité de Loby
 
-Loby fonctionne **entièrement dans le navigateur**, sans serveur : toutes les protections sont donc appliquées
-côté client, en HTML, en JavaScript et par la Content-Security-Policy. Nous avons cherché à superposer plusieurs
-barrières (validation HTML **et** JS, CSP **et** `textContent`…) et à documenter honnêtement ce qu'un site sans backend ne peut pas protéger.
+Le projet a été construit en deux temps. La **v1** fonctionne sans backend, pour maîtriser la sécurité côté navigateur :
+toutes ses protections sont appliquées côté client, en HTML, en JavaScript et par la Content-Security-Policy.
+L'audit a ensuite montré ses limites (sections 2 et 3). La **v2** (version finale, section 4) ajoute un backend
+(Supabase), autorisé par le prof, pour partager les données et faire vérifier la sécurité par le serveur.
+Nous avons cherché à superposer plusieurs barrières (validation HTML **et** JS, CSP **et** `textContent`…)
+et à documenter honnêtement ce qu'un site sans backend ne peut pas protéger.
 
 ## 1. Tableau des protections
 
@@ -54,13 +57,13 @@ L'outil a examiné puis écarté 8 pistes. Nous les avons relues une par une :
 | 7 | Clickjacking impossible à bloquer avec une CSP en `<meta>` | **Limite assumée** : la directive `frame-ancestors` est ignorée dans une balise `<meta>`, et GitHub Pages ne permet pas d'ajouter les en-têtes HTTP qui la porteraient. |
 | 8 | `localStorage` partagé entre tous les dépôts d'un même compte `github.io` | **Limite assumée** : tous les sites `acherderhy.github.io/...` ont la même origine, donc le même `localStorage`. Un autre dépôt du même compte pourrait lire nos données. Solution en production : un domaine dédié. |
 
-Les pistes 4 à 8 ne sont pas des erreurs de code : ce sont des conséquences directes de la contrainte « pas de backend ».
+Les pistes 4 à 8 ne sont pas des erreurs de code : ce sont des conséquences directes du choix de la v1 de fonctionner sans backend. La v2 les corrige (section 4).
 
 ## 3. Limites et ce qu'il faudrait en production
 
 Résumé de la section 4 de [cadrage.md](cadrage.md), qui détaille chaque point :
 
-- **Sans serveur, le navigateur a le dernier mot** : les données sont lisibles et modifiables avec F12, et le contrôle
+- **Dans la v1, sans serveur, le navigateur a le dernier mot** : les données sont lisibles et modifiables avec F12, et le contrôle
   d'autorisation, la limitation des tentatives et la session peuvent être contournés par quelqu'un qui manipule son propre navigateur.
 - **Pas de vrai réseau social** : chaque navigateur a ses propres comptes et posts.
 - **Stockage limité** à environ 5 Mo, photos comprises.
@@ -75,7 +78,7 @@ En production, il faudrait :
 - le **stockage des images sur un serveur**, avec vérifications côté serveur ;
 - des **journaux** pour détecter les attaques, et HTTPS partout.
 
-## 4. Version 2 (bonus) : données partagées avec Supabase
+## 4. Version 2 (version finale) : données partagées avec Supabase
 
 Le dossier [v2/](v2/) branche la même interface sur Supabase (base PostgreSQL hébergée). Toutes les protections
 côté navigateur de la v1 sont gardées (CSP, `textContent`, validation HTML + JS, vérification et redessin des photos) ;
