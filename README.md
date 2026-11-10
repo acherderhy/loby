@@ -1,6 +1,6 @@
 # Loby
 
-![Logo Loby](assets/logo/loby-horizontal-bleu.svg)
+<img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="64">
 
 **Loby** est un mini réseau social type Twitter, réalisé en groupe de 4 dans le cadre d'un cours
 mêlant développement, IA et cybersécurité. Il fonctionne **entièrement dans le navigateur** :
