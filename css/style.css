@@ -1,0 +1,46 @@
+/*
+  Fichier : css/style.css
+  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages).
+            Pour l'instant : uniquement la base (couleurs et police). Le reste viendra avec les fonctionnalités.
+  Membre  : Membre 3 (interface)
+
+  SÉCURITÉ : tous les styles sont dans ce fichier externe. La CSP (style-src 'self') interdit
+  les styles inline (attribut style="..." ou balise <style>), qu'un attaquant pourrait injecter
+  pour cacher ou maquiller du contenu (faux bouton, faux formulaire).
+*/
+
+/* Couleurs de Loby, définies une seule fois et réutilisées partout avec var(--nom). */
+:root {
+  --couleur-principale: #2F54EB; /* bleu Loby : boutons, liens */
+  --couleur-accent: #FF7A45;     /* corail : le point du logo, les likes */
+  --couleur-texte: #0F172A;      /* bleu nuit presque noir : le texte */
+  --couleur-fond: #FFFFFF;       /* fond blanc */
+}
+
+/* Base de la page : police système (aucune police externe, donc aucune requête vers un autre site). */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--couleur-texte);
+  background-color: var(--couleur-fond);
+  line-height: 1.5;
+}
+
+/* Bandeau du haut avec le logo. */
+.en-tete {
+  padding: 16px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+/* Le logo garde ses proportions. */
+.en-tete img {
+  display: block;
+  width: auto;
+}
+
+/* Zone de contenu centrée, limitée en largeur pour rester lisible. */
+.contenu {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--
+  Fichier : index.html
+  Rôle    : page d'accueil de Loby. Elle contiendra les formulaires de connexion et d'inscription.
+            Pour l'instant : uniquement l'en-tête de sécurité (<head>) et un contenu minimal.
+  Membre  : Membre 4 (en-têtes de sécurité) et Membre 1 (formulaires de comptes)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP). Liste blanche de ce que la page a le droit de charger.
+    Si un attaquant réussit à injecter du code dans la page (attaque XSS), le navigateur refusera de l'exécuter.
+    - default-src 'self' : par défaut, uniquement des fichiers venant de notre propre site.
+    - script-src 'self' : scripts seulement depuis nos fichiers .js (aucun <script> inline, aucun onclick, pas d'eval).
+    - style-src 'self'  : styles seulement depuis css/style.css (aucun attribut style="..." ni <style>).
+    - img-src 'self'    : images seulement depuis notre site (pas d'image piégée chargée ailleurs).
+    - object-src 'none' : aucun plugin (<object>, <embed>), souvent utilisés pour exécuter du code.
+    - base-uri 'self'   : empêche d'injecter une balise <base> qui détournerait tous nos chemins relatifs.
+    - form-action 'self': les formulaires ne peuvent envoyer leurs données que vers notre site (pas de vol d'identifiants).
+    Placée juste après charset pour s'appliquer avant le chargement de toute autre ressource.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby — Connexion</title>
+
+  <!-- Icônes du site (chemins RELATIFS : le site est publié dans un sous-dossier sur GitHub Pages). -->
+  <!-- Icône de l'onglet en SVG : nette à toutes les tailles (navigateurs récents). -->
+  <link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+  <!-- Solution de secours pour les navigateurs qui ne lisent pas le SVG. -->
+  <link rel="icon" href="assets/favicon/favicon.ico" sizes="48x48">
+  <!-- Icône quand on ajoute le site à l'écran d'accueil d'un iPhone. -->
+  <link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+  <!-- Fiche d'identité du site (nom + icônes Android). -->
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
+  <!-- Couleur de la barre du navigateur sur mobile (couleur principale de Loby). -->
+  <meta name="theme-color" content="#2F54EB">
+
+  <!-- Feuille de style externe (les styles inline sont interdits par la CSP). -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="en-tete">
+    <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+  </header>
+
+  <main class="contenu">
+    <h1>Connexion</h1>
+    <p>Page en construction : les formulaires de connexion et d'inscription arrivent bientôt.</p>
+  </main>
+</body>
+</html>

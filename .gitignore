@@ -1,0 +1,8 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Dossiers et fichiers d'éditeurs
+.vscode/
+.idea/
+*.swp

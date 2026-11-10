@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Loby">
+  <!-- Loby · symbole · variante "bleu" · Version principale, sur fond clair -->
+  <!-- Carré arrondi : le fond de l'icône -->
+  <rect width="120" height="120" rx="32" fill="#2F54EB"/>
+  <!-- Le "L" de Loby, dessiné comme un trait épais aux bouts arrondis -->
+  <path d="M44 32 V84 H82" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Le point : une notification, quelqu'un a posté -->
+  <circle cx="84" cy="36" r="11" fill="#FF7A45"/>
+</svg>
