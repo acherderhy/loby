@@ -1,4 +1,4 @@
-# Fiche d'oral — Membre 4 : CSP, validation des saisies et documentation
+# Fiche d'oral — EDEN : CSP, validation des saisies et documentation
 
 Fichiers : `js/validation.js`, en-têtes de sécurité de `index.html` et `fil.html`, `README.md`, `cadrage.md`, `SECURITE.md`.
 
@@ -98,6 +98,7 @@ Chaque ressource externe est une porte d'entrée : si le CDN est compromis, son 
 En plus, la CSP peut rester à `'self'`, et aucune requête ne part vers un autre site avec l'adresse IP de l'utilisateur.
 
 ## En mes mots
+Moi, je présente la sécurité générale du site. Chaque page a une règle de sécurité, la CSP, qui dit au navigateur de n'exécuter que nos propres fichiers : un script injecté par un pirate est bloqué. Toutes les saisies sont vérifiées deux fois, dans le HTML puis dans le JavaScript, parce que le HTML peut être contourné.
 
-<!-- À compléter par le Membre 4 : reformuler la partie avec ses propres mots. -->
+On a aussi fait auditer le code par un outil d'IA : il n'a trouvé aucune faille grave et a relevé 8 points. On en a corrigé 3, et les 5 autres sont des limites normales d'un site sans serveur, qu'on explique dans le cadrage avec ce qu'il faudrait faire en vrai.
 

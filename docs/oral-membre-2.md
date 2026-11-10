@@ -1,4 +1,4 @@
-# Fiche d'oral — Membre 2 : posts, autorisation et sécurité des photos
+# Fiche d'oral — Nathan : posts, autorisation et sécurité des photos
 
 Fichiers : `js/posts.js`, `js/images.js`.
 
@@ -105,5 +105,6 @@ on supprime ces données et tout contenu caché ajouté à la fin du fichier. En
 
 ## En mes mots
 
-<!-- À compléter par le Membre 2 : reformuler la partie avec ses propres mots. -->
+Moi, je m'occupe des posts et des photos. Une photo peut être dangereuse, donc avant de l'accepter on fait plusieurs contrôles : la taille (5 Mo max), le type (JPEG, PNG ou WebP seulement, pas de SVG qui peut cacher du code), et on lit les premiers octets du fichier pour vérifier que c'est vraiment une image et pas un fichier renommé.
 
+Ensuite, on redessine l'image : ça supprime les informations cachées dans la photo, comme la position GPS du téléphone. Enfin, on ne peut supprimer que ses propres posts : le code vérifie qui est l'auteur au moment de la suppression, même si quelqu'un essaie de tricher depuis la console.

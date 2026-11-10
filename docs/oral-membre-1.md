@@ -1,4 +1,4 @@
-# Fiche d'oral — Membre 1 : comptes et hachage des mots de passe
+# Fiche d'oral — Liora : comptes et hachage des mots de passe
 
 Fichiers : `js/hachage.js`, `js/comptes.js` (et la partie formulaires de `index.html`).
 
@@ -97,5 +97,6 @@ Un vrai blocage doit être fait côté serveur, par compte et par adresse IP.
 
 ## En mes mots
 
-<!-- À compléter par le Membre 1 : reformuler la partie avec ses propres mots. -->
+Moi, je m'occupe des comptes : l'inscription, la connexion et la déconnexion. Le plus important, c'est que les mots de passe ne sont jamais enregistrés en clair. On les transforme avec un hachage (PBKDF2, 600 000 fois) et un "sel" différent pour chaque personne : même si quelqu'un lit les données, il ne retrouve pas le mot de passe, et deux personnes avec le même mot de passe n'ont pas le même résultat.
 
+J'ai aussi bloqué la connexion pendant 30 secondes après 5 erreurs, pour empêcher quelqu'un d'essayer des milliers de mots de passe. Et le message d'erreur est toujours le même, "Identifiants incorrects" : comme ça, on ne peut pas deviner quels pseudos existent.
