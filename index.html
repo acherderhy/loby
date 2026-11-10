@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
   Fichier : index.html
-  Rôle    : page d'accueil de Loby. Elle contiendra les formulaires de connexion et d'inscription.
-            Pour l'instant : uniquement l'en-tête de sécurité (<head>) et un contenu minimal.
+  Rôle    : page d'accueil de Loby, avec les formulaires « Créer un compte » et « Se connecter ».
+            Après une inscription ou une connexion réussie, on est redirigé vers fil.html.
   Membre  : Membre 4 (en-têtes de sécurité) et Membre 1 (formulaires de comptes)
 -->
 <html lang="fr">
@@ -53,9 +53,64 @@
     <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
   </header>
 
-  <main class="contenu">
-    <h1>Connexion</h1>
-    <p>Page en construction : les formulaires de connexion et d'inscription arrivent bientôt.</p>
+  <main class="contenu contenu--accueil">
+    <h1 class="accroche">Partagez vos idées en 280 caractères.</h1>
+
+    <div class="grille-formulaires">
+      <!-- Formulaire d'inscription. -->
+      <section class="carte">
+        <h2 class="carte-titre">Créer un compte</h2>
+        <!--
+          SÉCURITÉ : validation HTML (required, minlength, maxlength, pattern). Première barrière contre
+          les saisies hors règles ; elle est revérifiée en JavaScript (validation.js) car elle se contourne avec F12.
+          Pas d'attribut "action" : l'envoi est géré en JS (comptes.js), les données ne quittent jamais le navigateur.
+        -->
+        <form id="formulaire-inscription" class="formulaire">
+          <label for="inscription-pseudo">Pseudo</label>
+          <input type="text" id="inscription-pseudo" name="pseudo"
+                 required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username">
+          <p class="aide">3 à 20 caractères : lettres sans accent, chiffres ou _</p>
+
+          <label for="inscription-mot-de-passe">Mot de passe</label>
+          <!-- autocomplete="new-password" : le gestionnaire de mots de passe propose un mot de passe fort. -->
+          <input type="password" id="inscription-mot-de-passe" name="mot-de-passe"
+                 required minlength="8" maxlength="64" autocomplete="new-password">
+          <p class="aide">8 à 64 caractères</p>
+
+          <!-- Zone des messages d'erreur (remplie en JS avec textContent). aria-live : lue par les lecteurs d'écran. -->
+          <p id="message-inscription" class="message-erreur" aria-live="polite"></p>
+          <button type="submit" id="bouton-inscription" class="bouton bouton--principal">Créer mon compte</button>
+        </form>
+      </section>
+
+      <!-- Formulaire de connexion. -->
+      <section class="carte">
+        <h2 class="carte-titre">Se connecter</h2>
+        <!-- SÉCURITÉ : mêmes règles HTML que l'inscription, revérifiées en JavaScript. -->
+        <form id="formulaire-connexion" class="formulaire">
+          <label for="connexion-pseudo">Pseudo</label>
+          <input type="text" id="connexion-pseudo" name="pseudo"
+                 required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username">
+
+          <label for="connexion-mot-de-passe">Mot de passe</label>
+          <input type="password" id="connexion-mot-de-passe" name="mot-de-passe"
+                 required minlength="8" maxlength="64" autocomplete="current-password">
+
+          <p id="message-connexion" class="message-erreur" aria-live="polite"></p>
+          <button type="submit" id="bouton-connexion" class="bouton bouton--principal">Se connecter</button>
+        </form>
+      </section>
+    </div>
   </main>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). Placés en fin de page pour que les formulaires existent déjà.
+    L'ordre compte : chaque fichier utilise les fonctions des fichiers chargés avant lui.
+  -->
+  <script src="js/stockage.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/hachage.js"></script>
+  <script src="js/comptes.js"></script>
 </body>
 </html>

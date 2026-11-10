@@ -22,7 +22,7 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 ## 3) Les 3 fonctionnalités du MVP
 
 ### Fonctionnalité 1 — Comptes
-- **Inscription** avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 caractères minimum).
+- **Inscription** avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 à 64 caractères).
 - **Connexion** avec le pseudo et le mot de passe.
 - **Déconnexion**.
 - Protections : mot de passe haché avec PBKDF2 + sel aléatoire ; message d'erreur générique

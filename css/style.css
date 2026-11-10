@@ -1,7 +1,6 @@
 /*
   Fichier : css/style.css
-  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages).
-            Pour l'instant : uniquement la base (couleurs et police). Le reste viendra avec les fonctionnalités.
+  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages, version téléphone).
   Membre  : Membre 3 (interface)
 
   SÉCURITÉ : tous les styles sont dans ce fichier externe. La CSP (style-src 'self') interdit
@@ -11,10 +10,20 @@
 
 /* Couleurs de Loby, définies une seule fois et réutilisées partout avec var(--nom). */
 :root {
-  --couleur-principale: #2F54EB; /* bleu Loby : boutons, liens */
-  --couleur-accent: #FF7A45;     /* corail : le point du logo, les likes */
-  --couleur-texte: #0F172A;      /* bleu nuit presque noir : le texte */
-  --couleur-fond: #FFFFFF;       /* fond blanc */
+  --couleur-principale: #2F54EB;        /* bleu Loby : boutons, liens */
+  --couleur-principale-foncee: #1D39C4; /* bleu plus foncé : survol des boutons */
+  --couleur-accent: #FF7A45;            /* corail : le point du logo, les likes */
+  --couleur-texte: #0F172A;             /* bleu nuit presque noir : le texte */
+  --couleur-texte-secondaire: #475569;  /* gris : dates, aides */
+  --couleur-bordure: #E2E8F0;           /* gris clair : bordures */
+  --couleur-fond: #FFFFFF;              /* fond blanc */
+  --couleur-fond-doux: #F8FAFC;         /* fond très légèrement gris : derrière les cartes */
+  --couleur-erreur: #B91C1C;            /* rouge : messages d'erreur, bouton Supprimer */
+}
+
+/* Les tailles incluent les marges intérieures et les bordures (plus simple à calculer). */
+* {
+  box-sizing: border-box;
 }
 
 /* Base de la page : police système (aucune police externe, donc aucune requête vers un autre site). */
@@ -22,14 +31,17 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--couleur-texte);
-  background-color: var(--couleur-fond);
+  background-color: var(--couleur-fond-doux);
   line-height: 1.5;
 }
+
+/* ---------- En-tête ---------- */
 
 /* Bandeau du haut avec le logo. */
 .en-tete {
   padding: 16px;
-  border-bottom: 1px solid #E2E8F0;
+  background-color: var(--couleur-fond);
+  border-bottom: 1px solid var(--couleur-bordure);
 }
 
 /* Le logo garde ses proportions. */
@@ -38,9 +50,271 @@ body {
   width: auto;
 }
 
+/* Sur le fil : logo à gauche, utilisateur à droite (et passage à la ligne si l'écran est étroit). */
+.en-tete--fil {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.utilisateur {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.utilisateur-pseudo {
+  font-weight: 600;
+}
+
+/* ---------- Mise en page ---------- */
+
 /* Zone de contenu centrée, limitée en largeur pour rester lisible. */
 .contenu {
   max-width: 600px;
   margin: 0 auto;
   padding: 16px;
+}
+
+/* La page d'accueil est un peu plus large, pour mettre les 2 formulaires côte à côte. */
+.contenu--accueil {
+  max-width: 880px;
+}
+
+.accroche {
+  margin: 8px 0 24px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+/* Sur téléphone : les 2 formulaires l'un sous l'autre. */
+.grille-formulaires {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Sur un écran d'au moins 720 px : les 2 formulaires côte à côte. */
+@media (min-width: 720px) {
+  .grille-formulaires {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Titre présent pour les lecteurs d'écran, mais caché à l'écran. */
+.titre-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.titre-section {
+  margin: 24px 0 8px;
+  font-size: 1.25rem;
+}
+
+/* Bloc blanc à bords arrondis (formulaires). */
+.carte {
+  padding: 20px;
+  background-color: var(--couleur-fond);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 12px;
+}
+
+.carte-titre {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+}
+
+/* ---------- Formulaires ---------- */
+
+.formulaire {
+  display: flex;
+  flex-direction: column;
+}
+
+.formulaire label {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.formulaire input,
+.formulaire textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--couleur-texte);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 8px;
+}
+
+.formulaire textarea {
+  resize: vertical;
+}
+
+/* Contour bien visible sur le champ actif (utile au clavier). */
+.formulaire input:focus,
+.formulaire textarea:focus {
+  outline: 2px solid var(--couleur-principale);
+  outline-offset: 1px;
+}
+
+/* Petite aide sous un champ (règles du pseudo et du mot de passe). */
+.aide {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--couleur-texte-secondaire);
+}
+
+.formulaire button[type="submit"] {
+  margin-top: 16px;
+}
+
+/* Ligne sous la zone de texte : compteur à gauche, bouton Publier à droite. */
+.formulaire-pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compteur {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--couleur-texte-secondaire);
+}
+
+/* Classe ajoutée en JS quand il reste moins de 20 caractères. */
+.compteur--alerte {
+  color: var(--couleur-erreur);
+  font-weight: 600;
+}
+
+/* Message d'erreur : caché tant qu'il est vide (le JS écrit le texte avec textContent). */
+.message-erreur {
+  margin: 12px 0 0;
+  color: var(--couleur-erreur);
+  font-weight: 600;
+}
+
+.message-erreur:empty {
+  display: none;
+}
+
+/* ---------- Boutons ---------- */
+
+.bouton {
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.bouton:focus-visible,
+.bouton-like:focus-visible {
+  outline: 2px solid var(--couleur-principale);
+  outline-offset: 2px;
+}
+
+/* Bouton grisé pendant le hachage du mot de passe (attribut disabled). */
+.bouton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.bouton--principal {
+  color: #FFFFFF;
+  background-color: var(--couleur-principale);
+}
+
+.bouton--principal:hover {
+  background-color: var(--couleur-principale-foncee);
+}
+
+.bouton--secondaire {
+  color: var(--couleur-principale);
+  background-color: var(--couleur-fond);
+  border-color: var(--couleur-principale);
+}
+
+.bouton--danger {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  color: var(--couleur-erreur);
+  background-color: var(--couleur-fond);
+  border-color: var(--couleur-bordure);
+}
+
+.bouton--danger:hover {
+  border-color: var(--couleur-erreur);
+}
+
+/* ---------- Posts ---------- */
+
+.post {
+  margin-bottom: 12px;
+  padding: 16px;
+  background-color: var(--couleur-fond);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 12px;
+}
+
+/* Pseudo et date sur la même ligne (passage à la ligne sur petit écran). */
+.post-en-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.post-en-tete time {
+  font-size: 0.85rem;
+  color: var(--couleur-texte-secondaire);
+}
+
+/* pre-wrap garde les retours à la ligne du post ; anywhere coupe les mots très longs (pas de débordement). */
+.post-texte {
+  margin: 8px 0 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bouton-like {
+  padding: 6px 12px;
+  font: inherit;
+  color: var(--couleur-texte-secondaire);
+  background-color: var(--couleur-fond);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.bouton-like:hover {
+  border-color: var(--couleur-accent);
+}
+
+/* Classe ajoutée en JS quand l'utilisateur a liké le post : fond corail, texte foncé (bien lisible). */
+.bouton-like--actif {
+  color: var(--couleur-texte);
+  background-color: var(--couleur-accent);
+  border-color: var(--couleur-accent);
+}
+
+.fil-vide {
+  color: var(--couleur-texte-secondaire);
+  text-align: center;
 }

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
   Fichier : fil.html
-  Rôle    : page du fil d'actualité de Loby. Elle contiendra le formulaire de publication et la liste des posts.
-            Pour l'instant : uniquement l'en-tête de sécurité (<head>) et un contenu minimal.
+  Rôle    : page du fil d'actualité de Loby (réservée aux utilisateurs connectés) : formulaire de publication
+            et liste des posts de tous les comptes, du plus récent au plus ancien.
   Membre  : Membre 3 (fil d'actualité et interface)
 -->
 <html lang="fr">
@@ -49,13 +49,52 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="en-tete">
+  <header class="en-tete en-tete--fil">
     <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+    <div class="utilisateur">
+      <!-- Pseudo de l'utilisateur connecté, écrit en JS avec textContent (fil.js). -->
+      <span id="pseudo-connecte" class="utilisateur-pseudo"></span>
+      <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
+    </div>
   </header>
 
   <main class="contenu">
-    <h1>Fil d'actualité</h1>
-    <p>Page en construction : la publication et la liste des posts arrivent bientôt.</p>
+    <h1 class="titre-cache">Fil d'actualité</h1>
+
+    <!-- Formulaire de publication. -->
+    <section class="carte">
+      <!--
+        SÉCURITÉ : validation HTML (required, maxlength="280"), revérifiée en JavaScript (validation.js)
+        car ces attributs se contournent avec F12. Pas d'attribut "action" : l'envoi est géré en JS (fil.js).
+      -->
+      <form id="formulaire-post" class="formulaire">
+        <label for="texte-post">Quoi de neuf ?</label>
+        <textarea id="texte-post" name="texte" rows="3" required maxlength="280"></textarea>
+        <div class="formulaire-pied">
+          <!-- Compteur de caractères restants, mis à jour à chaque frappe (fil.js). -->
+          <span id="compteur" class="compteur" aria-live="polite"></span>
+          <button type="submit" class="bouton bouton--principal">Publier</button>
+        </div>
+        <p id="message-publication" class="message-erreur" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- Le fil : les posts sont construits en JS avec createElement + textContent (jamais innerHTML). -->
+    <section aria-labelledby="titre-fil">
+      <h2 id="titre-fil" class="titre-section">Fil</h2>
+      <p id="message-fil" class="message-erreur" aria-live="polite"></p>
+      <div id="liste-posts"></div>
+    </section>
   </main>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). Placés en fin de page pour que les éléments existent déjà.
+    fil.js vérifie la session dès son chargement et redirige vers index.html si personne n'est connecté.
+  -->
+  <script src="js/stockage.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/posts.js"></script>
+  <script src="js/fil.js"></script>
 </body>
 </html>

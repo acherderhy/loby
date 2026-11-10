@@ -34,7 +34,13 @@ loby/
 ├── index.html          Page de connexion / inscription.
 ├── fil.html            Page du fil d'actualité.
 ├── css/style.css       Feuille de style unique.
-├── js/                 (à venir) stockage, hachage, validation, comptes, posts, fil.
+├── js/
+│   ├── stockage.js     Lecture/écriture localStorage et session.
+│   ├── hachage.js      Hachage PBKDF2 des mots de passe.
+│   ├── validation.js   Vérification des saisies.
+│   ├── comptes.js      Inscription, connexion, limitation des tentatives.
+│   ├── posts.js        Publication et suppression des posts.
+│   └── fil.js          Affichage du fil, likes, déconnexion.
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons et site.webmanifest.
 ├── assets/README-logo.md   Documentation du kit logo.
