@@ -17,6 +17,7 @@ protection contre le XSS, Content-Security-Policy, validation des saisies, contr
 - [cadrage.md](cadrage.md) : objectifs, rôles, limites, choix techniques et répartition du travail.
 - [SECURITE.md](SECURITE.md) : toutes les protections, l'attaque bloquée par chacune, l'audit de sécurité et les limites.
 - [prompts/](prompts/) : les prompts donnés à Claude Code à chaque étape du projet.
+- [docs/](docs/) : les fiches d'oral de chaque membre et le scénario de démo commun en 3 minutes.
 
 ## Fonctionnalités
 
@@ -68,6 +69,7 @@ loby/
 ├── assets/favicon/     Favicons et site.webmanifest.
 ├── assets/README-logo.md   Documentation du kit logo.
 ├── prompts/            Prompts donnés à Claude Code à chaque étape.
+├── docs/               Fiches d'oral (une par membre) et scénario de démo commun.
 ├── cadrage.md          Document de cadrage.
 ├── SECURITE.md         Protections, audit de sécurité et limites.
 ├── CLAUDE.md           Règles du projet (simplicité, documentation, sécurité).

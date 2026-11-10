@@ -31,6 +31,7 @@ loby/
 ├── assets/favicon/     Favicons + site.webmanifest (chemins relatifs).
 ├── assets/README-logo.md
 ├── prompts/            Prompts donnés à Claude Code à chaque étape (+ README.md).
+├── docs/               Fiches d'oral (oral-membre-1.md à oral-membre-4.md) et scénario de démo (demo.md).
 ├── CLAUDE.md, cadrage.md, README.md, SECURITE.md, .gitignore
 ```
 
