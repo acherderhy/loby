@@ -84,6 +84,22 @@ Préparation : site lancé en local, F12 ouvert, deux fichiers prêts sur le bur
    → la console répond `false`. Recharger la page : le post de `demo_a` est toujours là.
    (Chrome demande d'écrire `allow pasting` avant le premier collage dans la console : on peut aussi taper la commande.)
 5. *(Bonus)* Dans la console : `publierPost("test", "data:image/svg+xml;base64,AAAA", utilisateurConnecte.id)` → `"Photo invalide."`.
+6. **Version 2 (sur le site en ligne, pas sur localhost)** : ouvrir <https://acherderhy.github.io/loby/v2/fil.html>, connecté avec un compte fictif
+   (par exemple `demo_c`), F12 → **Console**, puis coller :
+   ```js
+   (async () => {
+     const monId = sessionStorage.getItem("loby_v2_id");
+     const entetes = { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + sessionStorage.getItem("loby_v2_jeton") };
+     const posts = await (await fetch(SUPABASE_URL + "/rest/v1/posts?select=id,texte,auteur_id,profiles!posts_auteur_id_fkey(pseudo)", { headers: entetes })).json();
+     const cible = posts.find(p => p.auteur_id !== monId);
+     console.log("Post visé (pas le mien) :", cible.texte, "— auteur :", cible.profiles.pseudo);
+     const reponse = await fetch(SUPABASE_URL + "/rest/v1/posts?id=eq." + cible.id, { method: "DELETE", headers: { ...entetes, Prefer: "return=representation" } });
+     console.log("Lignes supprimées :", await reponse.json());
+   })();
+   ```
+   La console affiche le post visé (celui d'un autre), puis `Lignes supprimées : []`. Ce `[]` veut dire que la base a refusé la suppression :
+   la règle RLS ne laisse supprimer que ses propres posts, même en contournant l'interface.
+   (Chrome demande d'écrire `allow pasting` avant le premier collage dans la console.)
 
 ## Questions probables du prof
 

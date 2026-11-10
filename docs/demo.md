@@ -5,7 +5,8 @@ Le détail de chaque protection est dans les fiches `oral-membre-1.md` à `oral-
 
 ## Avant l'oral (pas chronométré)
 
-- Lancer le site : `python3 -m http.server 8000` à la racine du projet, puis ouvrir <http://localhost:8000/> dans Chrome.
+- Partie v1 : lancer le site en local avec `python3 -m http.server 8000` à la racine du projet, puis ouvrir <http://localhost:8000/> dans Chrome.
+- Partie v2 : la démo se fait **sur le site en ligne** (<https://acherderhy.github.io/loby/> pour la v1 et <https://acherderhy.github.io/loby/v2/> pour la v2), **pas sur localhost**.
 - Partir d'un stockage vide : F12 → **Application** → **Storage** → **Clear site data**.
 - Garder F12 ouvert (onglets utiles : **Elements**, **Console**, **Application**).
 - Préparer sur le bureau : `photo.png` (une vraie image) et `faux.jpg` (un fichier texte renommé en `.jpg`).
@@ -35,9 +36,26 @@ Ouvrir <https://acherderhy.github.io/loby/v2/> sur l'ordinateur **et** sur le t�
 |---|---|---|---|
 | 2:00 – 2:20 | **Eden** | Introduire la v2 : « Le prof a autorisé un backend : Supabase. Même interface, mais les données sont dans une base partagée. » | Le bandeau « Version 2 » ; l'onglet **Network** : les requêtes partent vers Supabase (seul domaine autorisé par la CSP `connect-src`). |
 | 2:20 – 2:50 | **Liora** | Se connecter sur l'ordinateur (`demo_c`) et sur le téléphone (`demo_d`). Publier un post sur l'ordinateur, puis actualiser le fil du téléphone. | Le post apparaît sur le téléphone : les données sont partagées entre tous les appareils. Dans la v1, c'était impossible. |
-| 2:50 – 3:20 | **Nathan** | Sur le téléphone (`demo_d`), liker le post de `demo_c`. Dans la **Console** de l'ordinateur, tenter de supprimer le post de `demo_d` avec une requête `fetch` vers Supabase (ou via l'interface modifiée). | La base **refuse** la suppression (règle RLS) : même en contournant l'interface, on ne supprime que ses propres posts. |
-| 3:20 – 3:40 | **Acher** | Montrer qu'un jeton modifié dans le `sessionStorage` ne donne rien, puis recharger. | Le serveur refuse le jeton (401) : retour à la connexion. La session falsifiable de la v1 est corrigée. |
+| 2:50 – 3:20 | **Nathan** | Sur le téléphone (`demo_d`), liker le post de `demo_c`. Sur l'ordinateur, sur <https://acherderhy.github.io/loby/v2/fil.html>, ouvrir la **Console** et coller la commande ci-dessous. | La console affiche le post visé (celui d'un autre) puis `Lignes supprimées : []` : la base a refusé la suppression (règle RLS). |
+| 3:20 – 3:40 | **Acher** | **Application** → **Session Storage** → `loby_v2_jeton` : modifier la fin du jeton, puis recharger la page. | Le serveur refuse le jeton falsifié : retour à la page de connexion. La session falsifiable de la v1 est corrigée. |
 | 3:40 – 4:00 | **Eden** | Conclusion (ci-dessous). | La clé visible dans le code est publique par conception ; la sécurité vient des règles RLS. |
+
+### Commande de Nathan (v2, Console, sur le site en ligne)
+
+```js
+(async () => {
+  const monId = sessionStorage.getItem("loby_v2_id");
+  const entetes = { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + sessionStorage.getItem("loby_v2_jeton") };
+  const posts = await (await fetch(SUPABASE_URL + "/rest/v1/posts?select=id,texte,auteur_id,profiles!posts_auteur_id_fkey(pseudo)", { headers: entetes })).json();
+  const cible = posts.find(p => p.auteur_id !== monId);
+  console.log("Post visé (pas le mien) :", cible.texte, "— auteur :", cible.profiles.pseudo);
+  const reponse = await fetch(SUPABASE_URL + "/rest/v1/posts?id=eq." + cible.id, { method: "DELETE", headers: { ...entetes, Prefer: "return=representation" } });
+  console.log("Lignes supprimées :", await reponse.json());
+})();
+```
+
+`Lignes supprimées : []` veut dire que la base a refusé : aucune ligne n'a été supprimée, car le post n'appartient pas à l'utilisateur connecté.
+(Chrome demande d'écrire `allow pasting` avant le premier collage dans la console.)
 
 ## Phrase de conclusion (Eden)
 
