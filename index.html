@@ -16,14 +16,19 @@
     - default-src 'self' : par défaut, uniquement des fichiers venant de notre propre site.
     - script-src 'self' : scripts seulement depuis nos fichiers .js (aucun <script> inline, aucun onclick, pas d'eval).
     - style-src 'self'  : styles seulement depuis css/style.css (aucun attribut style="..." ni <style>).
-    - img-src 'self'    : images seulement depuis notre site (pas d'image piégée chargée ailleurs).
+    - img-src 'self' data: : images depuis notre site, ou écrites directement dans la page sous forme de
+      « data URL » (texte "data:image/jpeg;base64,..."). C'est nécessaire car les photos (profil et posts)
+      sont gardées dans le localStorage sous cette forme. C'est sans danger : data: n'est autorisé QUE pour
+      les images, pas pour les scripts (script-src reste 'self'), une image affichée dans <img> ne peut pas
+      exécuter de JavaScript, et images.js n'affiche que des JPEG redessinés par notre canvas.
+      Aucune adresse externe n'est autorisée : pas d'image piégée chargée depuis un autre site.
     - object-src 'none' : aucun plugin (<object>, <embed>), souvent utilisés pour exécuter du code.
     - base-uri 'self'   : empêche d'injecter une balise <base> qui détournerait tous nos chemins relatifs.
     - form-action 'self': les formulaires ne peuvent envoyer leurs données que vers notre site (pas de vol d'identifiants).
     Placée juste après charset pour s'appliquer avant le chargement de toute autre ressource.
   -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
 
   <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -77,6 +82,15 @@
                  required minlength="8" maxlength="64" autocomplete="new-password">
           <p class="aide">8 à 64 caractères</p>
 
+          <label for="inscription-photo">Photo de profil (facultatif)</label>
+          <!--
+            SÉCURITÉ : accept limite la fenêtre de choix aux images JPEG, PNG et WebP (pas de SVG, qui peut contenir
+            du JavaScript). C'est seulement une aide : images.js revérifie le type, les premiers octets et le poids,
+            puis redessine l'image pour supprimer les métadonnées (position GPS…).
+          -->
+          <input type="file" id="inscription-photo" name="photo" accept="image/jpeg,image/png,image/webp">
+          <p class="aide">JPEG, PNG ou WebP, 5 Mo maximum</p>
+
           <!-- Zone des messages d'erreur (remplie en JS avec textContent). aria-live : lue par les lecteurs d'écran. -->
           <p id="message-inscription" class="message-erreur" aria-live="polite"></p>
           <button type="submit" id="bouton-inscription" class="bouton bouton--principal">Créer mon compte</button>
@@ -111,6 +125,7 @@
   <script src="js/stockage.js"></script>
   <script src="js/validation.js"></script>
   <script src="js/hachage.js"></script>
+  <script src="js/images.js"></script>
   <script src="js/comptes.js"></script>
 </body>
 </html>

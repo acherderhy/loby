@@ -1,7 +1,7 @@
 /*
   Fichier : js/comptes.js
-  Rôle    : gère les formulaires de la page d'accueil (index.html) : inscription, connexion,
-            et blocage temporaire de la connexion après trop d'échecs.
+  Rôle    : gère les formulaires de la page d'accueil (index.html) : inscription (avec photo de profil
+            facultative), connexion, et blocage temporaire de la connexion après trop d'échecs.
   Membre  : Membre 1
 */
 
@@ -48,9 +48,10 @@ function verifierSaisieInscription(pseudo, motDePasse) {
  * Crée un nouvel utilisateur avec un mot de passe haché (le mot de passe en clair n'est jamais gardé).
  * @param {string} pseudo - Le pseudo choisi.
  * @param {string} motDePasse - Le mot de passe en clair.
- * @returns {Promise<Object>} L'utilisateur { id, pseudo, sel, hachage, dateCreation }.
+ * @param {string} avatar - La photo de profil en data URL, ou "" s'il n'y en a pas.
+ * @returns {Promise<Object>} L'utilisateur { id, pseudo, sel, hachage, avatar, dateCreation }.
  */
-async function creerUtilisateur(pseudo, motDePasse) {
+async function creerUtilisateur(pseudo, motDePasse, avatar) {
   const sel = genererSel();
   // await : on attend la fin du calcul du hash (voir hachage.js).
   const hachage = await hacherMotDePasse(motDePasse, sel);
@@ -59,13 +60,48 @@ async function creerUtilisateur(pseudo, motDePasse) {
     pseudo: pseudo,
     sel: octetsVersHexa(sel),
     hachage: hachage,
+    avatar: avatar,
     dateCreation: new Date().toISOString()
   };
 }
 
 /**
+ * Prépare la photo de profil choisie à l'inscription (facultative), avec les vérifications d'images.js.
+ * « async » car la vérification et le redessin de l'image prennent du temps.
+ * @returns {Promise<Object>} { erreur, dataUrl } : dataUrl vaut "" si aucune photo n'a été choisie.
+ */
+async function preparerPhotoInscription() {
+  const fichier = document.getElementById("inscription-photo").files[0];
+  if (fichier === undefined) {
+    return { erreur: "", dataUrl: "" }; // pas de photo : l'avatar affichera l'initiale du pseudo
+  }
+  return await preparerAvatar(fichier);
+}
+
+/**
+ * Prépare la photo, crée le compte, l'enregistre et ouvre la session.
+ * @param {string} pseudo - Le pseudo choisi (déjà vérifié).
+ * @param {string} motDePasse - Le mot de passe en clair (déjà vérifié).
+ * @returns {Promise<string>} Le message d'erreur, ou "" si le compte a été créé.
+ */
+async function creerEtEnregistrerCompte(pseudo, motDePasse) {
+  const photo = await preparerPhotoInscription();
+  if (photo.erreur !== "") {
+    return photo.erreur;
+  }
+  const utilisateur = await creerUtilisateur(pseudo, motDePasse, photo.dataUrl);
+  const utilisateurs = lireUtilisateurs();
+  utilisateurs.push(utilisateur);
+  if (!enregistrerUtilisateurs(utilisateurs)) {
+    return MESSAGE_STOCKAGE_PLEIN;
+  }
+  ouvrirSession(utilisateur.id);
+  return "";
+}
+
+/**
  * Traite l'envoi du formulaire d'inscription : vérifie, crée le compte, connecte et redirige vers le fil.
- * « async » car on attend le hachage du mot de passe.
+ * « async » car on attend le traitement de la photo et le hachage du mot de passe.
  * @param {SubmitEvent} evenement - L'événement d'envoi du formulaire.
  * @returns {Promise<void>}
  */
@@ -73,20 +109,20 @@ async function gererInscription(evenement) {
   evenement.preventDefault(); // on empêche le navigateur de recharger la page
   const pseudo = document.getElementById("inscription-pseudo").value;
   const motDePasse = document.getElementById("inscription-mot-de-passe").value;
-  const erreur = verifierSaisieInscription(pseudo, motDePasse);
+  let erreur = verifierSaisieInscription(pseudo, motDePasse);
   afficherMessage("message-inscription", erreur);
   if (erreur !== "") {
     return;
   }
-  // Bouton désactivé pendant le hachage : évite un double envoi (et donc un compte créé deux fois).
+  // Bouton désactivé pendant le traitement : évite un double envoi (et donc un compte créé deux fois).
   const bouton = document.getElementById("bouton-inscription");
   bouton.disabled = true;
-  const utilisateur = await creerUtilisateur(pseudo, motDePasse);
+  erreur = await creerEtEnregistrerCompte(pseudo, motDePasse);
   bouton.disabled = false;
-  const utilisateurs = lireUtilisateurs();
-  utilisateurs.push(utilisateur);
-  enregistrerUtilisateurs(utilisateurs);
-  ouvrirSession(utilisateur.id);
+  if (erreur !== "") {
+    afficherMessage("message-inscription", erreur);
+    return;
+  }
   window.location.href = "fil.html";
 }
 

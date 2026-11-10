@@ -15,7 +15,7 @@ d'expliquer chaque protection et l'attaque qu'elle bloque.
 | Rôle | Ce qu'il peut faire |
 |---|---|
 | **Visiteur** (non connecté) | Créer un compte, se connecter. Il ne peut pas voir le fil. |
-| **Utilisateur connecté** | Voir le fil, publier un post, supprimer **ses propres** posts, liker / retirer son like, se déconnecter. |
+| **Utilisateur connecté** | Voir le fil, publier un post (avec une photo facultative), supprimer **ses propres** posts, liker / retirer son like, changer sa photo de profil, se déconnecter. |
 
 Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer le post d'un autre.
 
@@ -25,15 +25,28 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 - **Inscription** avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 à 64 caractères).
 - **Connexion** avec le pseudo et le mot de passe.
 - **Déconnexion**.
+- **Photo de profil** facultative : choisie à l'inscription, modifiable depuis le fil en cliquant sur son avatar.
+  Sans photo, l'avatar affiche l'initiale du pseudo (en CSS, sans image).
 - Protections : mot de passe haché avec PBKDF2 + sel aléatoire ; message d'erreur générique
   « Identifiants incorrects » ; blocage de 30 secondes après 5 échecs ; seul l'identifiant
   de l'utilisateur est gardé en session.
 
 ### Fonctionnalité 2 — Posts
-- **Publier** un post de 1 à 280 caractères.
-- **Supprimer** uniquement ses propres posts.
+- **Publier** un post avec une photo, un texte (280 caractères maximum) ou les deux (photo en haut, description en dessous) ; un post vide est refusé.
+- **Photo** facultative (une seule par post), avec un aperçu avant publication et un bouton pour la retirer.
+- **Supprimer** uniquement ses propres posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler).
 - Protections : validation de la longueur (HTML + JS) ; avant chaque suppression, le code vérifie
   que l'utilisateur connecté est bien l'auteur du post.
+
+### Protections des photos (profil et posts)
+- Seuls les JPEG, PNG et WebP sont acceptés : attribut `accept`, **et** vérification en JavaScript du type déclaré
+  **et** des premiers octets du fichier (sa « signature »). Un fichier texte renommé en `.jpg` est refusé, le SVG aussi
+  (c'est du texte qui peut contenir du JavaScript).
+- 5 Mo maximum, vérifiés avant tout traitement.
+- L'image est **redessinée dans un canvas** puis exportée en JPEG : les métadonnées EXIF (position GPS, modèle du téléphone)
+  et tout contenu caché disparaissent. Avatar : 128×128 pixels ; photo de post : 800 pixels de large au maximum.
+- Avant d'afficher une photo, on vérifie qu'elle commence par `data:image/jpeg;base64,` (le `localStorage` est modifiable
+  à la main). L'affichage se fait avec `createElement("img")`, jamais `innerHTML`.
 
 ### Fonctionnalité 3 — Fil d'actualité
 - Affiche les posts de **tous les comptes**, **les plus récents en haut**.
@@ -77,9 +90,19 @@ de l'utilisateur**, et celui-ci en a le contrôle total. Concrètement :
   `Strict-Transport-Security` (HTTPS obligatoire), `X-Content-Type-Options` ;
 - des **journaux** pour détecter les attaques, et du HTTPS partout.
 
-### Pas d'images
-Accepter des fichiers envoyés par les utilisateurs ouvre de nouveaux risques (fichiers piégés, SVG contenant
-du JavaScript, poids des fichiers dans le `localStorage` limité à quelques Mo). Ce n'est pas nécessaire pour le MVP.
+### Photos : la limite du localStorage
+Les photos sont gardées dans le `localStorage`, sous forme de texte (« data URL »). Or le `localStorage` est limité
+à **environ 5 Mo par site**, pour toutes les données réunies (comptes, posts, likes **et** photos). Même réduites
+et compressées (avatar de 128×128, photo de post de 800 pixels de large en JPEG), une photo de post pèse souvent
+50 à 150 Ko : quelques dizaines de photos suffisent à remplir le stockage. Le site affiche alors
+« Stockage plein : supprimez d'anciens posts. ».
+
+**Dans une vraie application**, les images seraient stockées sur un **serveur** (un service de stockage de fichiers,
+souvent derrière un CDN qui les distribue rapidement), et la base de données ne garderait que leur adresse. Cela permet :
+- de ne pas être limité à quelques Mo, et de partager les photos entre tous les utilisateurs ;
+- de faire les vérifications **côté serveur** (type, signature, taille, ré-encodage, antivirus), là où l'utilisateur
+  ne peut pas les contourner ;
+- d'appliquer des **quotas par compte** et de supprimer les images signalées.
 
 ### Pas d'abonnements
 Le fil affiche tout le monde. Gérer qui suit qui ajouterait des données et de la logique
@@ -99,6 +122,7 @@ Il faudrait un serveur et du chiffrement.
 | **JavaScript vanilla** | Logique de l'application | Contrainte du projet ; sans librairie, on comprend et on maîtrise tout le code, et aucune dépendance externe ne peut être compromise. |
 | **localStorage** | Stockage des comptes, posts et likes | Seul moyen de garder des données sans backend ; elles restent après la fermeture du navigateur. |
 | **sessionStorage** | Identifiant de l'utilisateur connecté | Effacé à la fermeture de l'onglet : la session ne traîne pas. |
+| **Canvas API** (`<canvas>`) | Redessin des photos en JPEG | Intégrée au navigateur ; ne garde que les pixels, ce qui supprime les métadonnées (EXIF) et tout contenu caché. |
 | **Web Crypto API** (`crypto.subtle`) | Hachage PBKDF2, sels aléatoires | Intégrée au navigateur (pas de librairie), fiable et rapide. |
 | **Police système** | Typographie | Pas de Google Fonts : aucune requête externe, la CSP reste stricte (`default-src 'self'`). |
 | **GitHub Pages** | Hébergement | Gratuit, en HTTPS, adapté à un site statique. D'où les chemins relatifs (site dans un sous-dossier). |
@@ -108,7 +132,7 @@ Il faudrait un serveur et du chiffrement.
 | Membre | Responsabilité | Fichiers |
 |---|---|---|
 | **Membre 1** | Comptes (inscription, connexion, déconnexion, limitation des tentatives) et hachage des mots de passe | `js/hachage.js`, `js/comptes.js` |
-| **Membre 2** | Posts (publier, supprimer) et contrôle d'autorisation | `js/posts.js` |
+| **Membre 2** | Posts (publier, supprimer), contrôle d'autorisation et sécurité des photos (vérification, redessin, affichage) | `js/posts.js`, `js/images.js` |
 | **Membre 3** | Fil d'actualité, likes, interface et anti-XSS | `js/fil.js`, `css/style.css`, `fil.html` |
 | **Membre 4** | CSP, validation globale des saisies, README et cadrage | `js/validation.js`, `index.html` (en-têtes de sécurité des 2 pages), `README.md`, `cadrage.md` |
 

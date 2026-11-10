@@ -1,14 +1,18 @@
 /*
   Fichier : js/fil.js
   Rôle    : page du fil (fil.html) : vérifie que quelqu'un est connecté, affiche les posts du plus récent
-            au plus ancien, gère le compteur de caractères, la publication, les likes, la suppression et la déconnexion.
+            au plus ancien, gère le compteur de caractères, la publication (avec photo), les likes,
+            la suppression (avec confirmation), la photo de profil et la déconnexion.
   Membre  : Membre 3
 */
 
 const LONGUEUR_MAX_POST = 280;
 
-// L'utilisateur connecté (objet { id, pseudo, ... }), rempli au démarrage de la page.
+// L'utilisateur connecté (objet { id, pseudo, avatar, ... }), rempli au démarrage de la page.
 let utilisateurConnecte = null;
+
+// La photo choisie pour le prochain post, déjà vérifiée et redessinée (data URL), ou "" s'il n'y en a pas.
+let imagePostEnAttente = "";
 
 /**
  * Affiche un message d'erreur dans une zone de la page (au lieu d'un alert()).
@@ -19,6 +23,17 @@ let utilisateurConnecte = null;
 function afficherMessageFil(idZone, texte) {
   // SÉCURITÉ : textContent écrit du texte brut, jamais interprété comme du HTML (anti-XSS).
   document.getElementById(idZone).textContent = texte;
+}
+
+/**
+ * Efface tous les messages d'erreur de la page. Appelée au début de chaque action de l'utilisateur,
+ * pour qu'un ancien message (par exemple un refus de suppression) ne reste pas affiché.
+ * @returns {void}
+ */
+function effacerMessages() {
+  afficherMessageFil("message-avatar", "");
+  afficherMessageFil("message-publication", "");
+  afficherMessageFil("message-fil", "");
 }
 
 /**
@@ -34,19 +49,80 @@ function mettreAJourCompteur() {
 }
 
 /**
+ * Affiche l'aperçu de la photo choisie pour le post, avec le bouton « Retirer la photo ».
+ * @param {string} dataUrl - La photo redessinée, en data URL.
+ * @returns {void}
+ */
+function afficherApercu(dataUrl) {
+  const image = creerElementImage(dataUrl, "Aperçu de la photo à publier", "apercu-image");
+  if (image === null) {
+    return;
+  }
+  document.getElementById("apercu-photo").replaceChildren(image);
+  document.getElementById("zone-apercu").hidden = false;
+  // Avec une photo, le texte devient une description facultative (style Instagram).
+  document.getElementById("libelle-texte-post").textContent = "Description";
+}
+
+/**
+ * Retire la photo choisie pour le post : vide le champ fichier et cache l'aperçu.
+ * @returns {void}
+ */
+function retirerImagePost() {
+  imagePostEnAttente = "";
+  document.getElementById("image-post").value = ""; // vide le champ fichier
+  document.getElementById("apercu-photo").replaceChildren();
+  document.getElementById("zone-apercu").hidden = true;
+  document.getElementById("libelle-texte-post").textContent = "Quoi de neuf ?";
+}
+
+/**
+ * Réagit au choix d'une photo pour le post : la vérifie et la redessine (images.js), puis affiche l'aperçu.
+ * « async » car la vérification et le redessin de l'image prennent du temps.
+ * @returns {Promise<void>}
+ */
+async function gererChoixImagePost() {
+  effacerMessages();
+  const fichier = document.getElementById("image-post").files[0];
+  if (fichier === undefined) {
+    retirerImagePost();
+    return;
+  }
+  const resultat = await preparerImagePost(fichier);
+  if (resultat.erreur !== "") {
+    retirerImagePost(); // fichier refusé : on vide le champ et on cache l'éventuel ancien aperçu
+    afficherMessageFil("message-publication", resultat.erreur);
+    return;
+  }
+  imagePostEnAttente = resultat.dataUrl;
+  afficherApercu(imagePostEnAttente);
+}
+
+/**
+ * Réagit au clic sur « Retirer la photo ».
+ * @returns {void}
+ */
+function gererRetraitImage() {
+  effacerMessages();
+  retirerImagePost();
+}
+
+/**
  * Traite l'envoi du formulaire de publication.
  * @param {SubmitEvent} evenement - L'événement d'envoi du formulaire.
  * @returns {void}
  */
 function gererPublication(evenement) {
   evenement.preventDefault(); // on empêche le navigateur de recharger la page
+  effacerMessages();
   const zoneTexte = document.getElementById("texte-post");
-  if (!publierPost(zoneTexte.value, utilisateurConnecte.id)) {
-    afficherMessageFil("message-publication", "Le post doit contenir de 1 à 280 caractères, pas uniquement des espaces.");
+  const erreur = publierPost(zoneTexte.value, imagePostEnAttente, utilisateurConnecte.id);
+  if (erreur !== "") {
+    afficherMessageFil("message-publication", erreur);
     return;
   }
-  afficherMessageFil("message-publication", "");
   zoneTexte.value = "";
+  retirerImagePost();
   mettreAJourCompteur();
   afficherLesPosts();
 }
@@ -55,13 +131,13 @@ function gererPublication(evenement) {
  * Ajoute le like de l'utilisateur sur un post, ou le retire s'il avait déjà liké (un seul like par personne).
  * @param {string} idPost - L'identifiant du post.
  * @param {string} idUtilisateur - L'identifiant de l'utilisateur connecté.
- * @returns {void}
+ * @returns {boolean} false si le stockage est plein, sinon true.
  */
 function basculerLike(idPost, idUtilisateur) {
   const posts = lirePosts();
   const index = trouverIndexPost(posts, idPost);
   if (index === -1) {
-    return;
+    return true;
   }
   const likes = posts[index].likes;
   const position = likes.indexOf(idUtilisateur);
@@ -70,7 +146,7 @@ function basculerLike(idPost, idUtilisateur) {
   } else {
     likes.splice(position, 1); // déjà liké : on retire son id
   }
-  enregistrerPosts(posts);
+  return enregistrerPosts(posts);
 }
 
 /**
@@ -79,20 +155,21 @@ function basculerLike(idPost, idUtilisateur) {
  * @returns {void}
  */
 function gererLike(idPost) {
-  basculerLike(idPost, utilisateurConnecte.id);
+  effacerMessages();
+  if (!basculerLike(idPost, utilisateurConnecte.id)) {
+    afficherMessageFil("message-fil", MESSAGE_STOCKAGE_PLEIN);
+  }
   afficherLesPosts();
 }
 
 /**
- * Réagit au clic sur « Supprimer » : demande la suppression (revérifiée dans posts.js) puis réaffiche le fil.
+ * Réagit au clic sur « Oui » : demande la suppression (revérifiée dans posts.js) puis réaffiche le fil.
  * @param {string} idPost - L'identifiant du post à supprimer.
  * @returns {void}
  */
 function gererSuppression(idPost) {
-  const supprime = supprimerPost(idPost, utilisateurConnecte.id);
-  if (supprime) {
-    afficherMessageFil("message-fil", "");
-  } else {
+  effacerMessages();
+  if (!supprimerPost(idPost, utilisateurConnecte.id)) {
     afficherMessageFil("message-fil", "Vous ne pouvez supprimer que vos propres posts.");
   }
   afficherLesPosts();
@@ -108,26 +185,52 @@ function formaterDate(dateIso) {
 }
 
 /**
- * Crée l'en-tête d'un post : pseudo de l'auteur et date.
+ * Donne le nom à afficher pour l'auteur d'un post.
+ * @param {Object|null} auteur - L'auteur du post (null si le compte n'existe plus).
+ * @returns {string} « @pseudo », ou « Compte inconnu ».
+ */
+function nomAffiche(auteur) {
+  // Si le compte n'existe plus (localStorage modifié à la main), on affiche un texte neutre au lieu de planter.
+  if (auteur === null) {
+    return "Compte inconnu";
+  }
+  return "@" + auteur.pseudo;
+}
+
+/**
+ * Crée l'en-tête d'un post : avatar et pseudo de l'auteur, et date.
  * @param {Object} post - Le post à afficher.
+ * @param {Object|null} auteur - L'auteur du post.
  * @returns {HTMLElement} L'élément d'en-tête.
  */
-function creerEnTetePost(post) {
+function creerEnTetePost(post, auteur) {
   const enTete = document.createElement("div");
   enTete.className = "post-en-tete";
-  const auteur = document.createElement("strong");
-  const utilisateur = trouverUtilisateurParId(post.auteurId);
-  // Si le compte n'existe plus (localStorage modifié à la main), on affiche un texte neutre au lieu de planter.
-  auteur.textContent = "Compte inconnu";
-  if (utilisateur !== null) {
-    auteur.textContent = "@" + utilisateur.pseudo;
-  }
+  const nom = document.createElement("strong");
+  nom.textContent = nomAffiche(auteur);
   const date = document.createElement("time");
   date.setAttribute("datetime", post.date);
   date.textContent = formaterDate(post.date);
-  enTete.appendChild(auteur);
+  enTete.appendChild(creerAvatar(auteur));
+  enTete.appendChild(nom);
   enTete.appendChild(date);
   return enTete;
+}
+
+/**
+ * Crée un bouton avec son texte, ses classes CSS et l'action à lancer au clic.
+ * @param {string} texte - Le texte du bouton.
+ * @param {string} classes - Les classes CSS du bouton.
+ * @param {Function} quandClic - La fonction appelée au clic.
+ * @returns {HTMLButtonElement} Le bouton.
+ */
+function creerBouton(texte, classes, quandClic) {
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.className = classes;
+  bouton.textContent = texte;
+  bouton.addEventListener("click", quandClic);
+  return bouton;
 }
 
 /**
@@ -136,9 +239,10 @@ function creerEnTetePost(post) {
  * @returns {HTMLButtonElement} Le bouton like.
  */
 function creerBoutonLike(post) {
-  const bouton = document.createElement("button");
-  bouton.type = "button";
-  bouton.className = "bouton-like";
+  // La petite fonction anonyme retient l'id de CE post, pour savoir lequel a été cliqué.
+  const bouton = creerBouton("♥ " + post.likes.length, "bouton-like", function () {
+    gererLike(post.id);
+  });
   const dejaLike = post.likes.indexOf(utilisateurConnecte.id) !== -1;
   if (dejaLike) {
     bouton.classList.add("bouton-like--actif");
@@ -146,45 +250,104 @@ function creerBoutonLike(post) {
   // aria-pressed et aria-label : indiquent l'état et le sens du bouton aux lecteurs d'écran.
   bouton.setAttribute("aria-pressed", String(dejaLike));
   bouton.setAttribute("aria-label", "J'aime (" + post.likes.length + ")");
-  bouton.textContent = "♥ " + post.likes.length;
-  // La petite fonction anonyme retient l'id de CE post, pour savoir lequel a été cliqué.
-  bouton.addEventListener("click", function () {
-    gererLike(post.id);
-  });
   return bouton;
 }
 
 /**
- * Crée le bouton « Supprimer » d'un post.
+ * Crée le bouton « Supprimer » d'un post. Au clic, il ne supprime rien : il demande une confirmation.
  * @param {Object} post - Le post concerné.
  * @returns {HTMLButtonElement} Le bouton de suppression.
  */
 function creerBoutonSupprimer(post) {
-  const bouton = document.createElement("button");
-  bouton.type = "button";
-  bouton.className = "bouton bouton--danger";
-  bouton.textContent = "Supprimer";
-  bouton.addEventListener("click", function () {
-    gererSuppression(post.id);
+  const bouton = creerBouton("Supprimer", "bouton bouton--danger", function () {
+    effacerMessages();
+    afficherConfirmation(bouton, post);
   });
   return bouton;
 }
 
 /**
- * Construit l'élément HTML complet d'un post (en-tête, texte, boutons).
+ * Remplace le bouton « Supprimer » par « Supprimer ce post ? » avec les boutons « Oui » et « Annuler ».
+ * @param {HTMLButtonElement} boutonSupprimer - Le bouton à remplacer.
+ * @param {Object} post - Le post concerné.
+ * @returns {void}
+ */
+function afficherConfirmation(boutonSupprimer, post) {
+  const zone = document.createElement("div");
+  zone.className = "confirmation";
+  const question = document.createElement("span");
+  question.textContent = "Supprimer ce post ?";
+  // « Oui » appelle gererSuppression, qui passe par supprimerPost (contrôle d'autorisation dans posts.js).
+  const oui = creerBouton("Oui", "bouton bouton--danger", function () {
+    gererSuppression(post.id);
+  });
+  const annuler = creerBouton("Annuler", "bouton bouton--petit", function () {
+    effacerMessages();
+    const nouveauBouton = creerBoutonSupprimer(post);
+    zone.replaceWith(nouveauBouton); // on remet le bouton « Supprimer » à la place de la question
+    nouveauBouton.focus();
+  });
+  zone.append(question, oui, annuler);
+  boutonSupprimer.replaceWith(zone);
+  annuler.focus(); // le clavier se place sur le choix sans risque
+}
+
+/**
+ * Crée la photo d'un post, si le post en a une et qu'elle est sûre.
+ * @param {Object} post - Le post concerné.
+ * @param {Object|null} auteur - L'auteur du post (pour le texte alternatif).
+ * @returns {HTMLImageElement|null} L'image, ou null s'il n'y a rien à afficher.
+ */
+function creerImagePost(post, auteur) {
+  if (!post.image) {
+    return null; // pas de photo sur ce post
+  }
+  // creerElementImage (images.js) refuse toute image qui n'est pas un JPEG en data URL.
+  return creerElementImage(post.image, "Photo publiée par " + nomAffiche(auteur), "post-image");
+}
+
+/**
+ * Crée le paragraphe du texte d'un post.
+ * @param {Object} post - Le post concerné.
+ * @returns {HTMLParagraphElement} Le paragraphe du texte.
+ */
+function creerTextePost(post) {
+  const texte = document.createElement("p");
+  texte.className = "post-texte";
+  // SÉCURITÉ : anti-XSS. textContent affiche le texte tel quel : un post contenant
+  // <img src=x onerror=alert(1)> apparaît comme du texte et n'est jamais exécuté.
+  texte.textContent = post.texte;
+  return texte;
+}
+
+/**
+ * Construit l'élément HTML complet d'un post : en-tête, photo, texte (en dessous), boutons.
  * @param {Object} post - Le post à afficher.
  * @returns {HTMLElement} L'élément <article> du post.
  */
 function creerElementPost(post) {
   const article = document.createElement("article");
   article.className = "post";
-  article.appendChild(creerEnTetePost(post));
-  const texte = document.createElement("p");
-  texte.className = "post-texte";
-  // SÉCURITÉ : anti-XSS. textContent affiche le texte tel quel : un post contenant
-  // <img src=x onerror=alert(1)> apparaît comme du texte et n'est jamais exécuté.
-  texte.textContent = post.texte;
-  article.appendChild(texte);
+  const auteur = trouverUtilisateurParId(post.auteurId);
+  article.appendChild(creerEnTetePost(post, auteur));
+  const image = creerImagePost(post, auteur);
+  if (image !== null) {
+    article.appendChild(image); // la photo d'abord (style Instagram)…
+  }
+  // … puis le texte, seulement s'il y en a un (il est facultatif quand il y a une photo).
+  if (post.texte.trim() !== "") {
+    article.appendChild(creerTextePost(post));
+  }
+  article.appendChild(creerActionsPost(post));
+  return article;
+}
+
+/**
+ * Crée la ligne des boutons d'un post : like, et « Supprimer » sur ses propres posts.
+ * @param {Object} post - Le post concerné.
+ * @returns {HTMLElement} L'élément contenant les boutons.
+ */
+function creerActionsPost(post) {
   const actions = document.createElement("div");
   actions.className = "post-actions";
   actions.appendChild(creerBoutonLike(post));
@@ -193,8 +356,7 @@ function creerElementPost(post) {
   if (post.auteurId === utilisateurConnecte.id) {
     actions.appendChild(creerBoutonSupprimer(post));
   }
-  article.appendChild(actions);
-  return article;
+  return actions;
 }
 
 /**
@@ -220,6 +382,49 @@ function afficherLesPosts() {
 }
 
 /**
+ * Affiche l'avatar de l'utilisateur connecté dans le bouton en haut de la page.
+ * @returns {void}
+ */
+function afficherAvatarConnecte() {
+  document.getElementById("bouton-avatar").replaceChildren(creerAvatar(utilisateurConnecte));
+}
+
+/**
+ * Réagit au choix d'une nouvelle photo de profil : la vérifie, la redessine (images.js) et l'enregistre.
+ * « async » car la vérification et le redessin de l'image prennent du temps.
+ * @returns {Promise<void>}
+ */
+async function gererChangementAvatar() {
+  effacerMessages();
+  const champ = document.getElementById("champ-avatar");
+  const fichier = champ.files[0];
+  champ.value = ""; // vide le champ : choisir à nouveau le même fichier relancera l'événement
+  if (fichier === undefined) {
+    return;
+  }
+  const resultat = await preparerAvatar(fichier);
+  if (resultat.erreur !== "") {
+    afficherMessageFil("message-avatar", resultat.erreur);
+    return;
+  }
+  if (!enregistrerAvatar(utilisateurConnecte.id, resultat.dataUrl)) {
+    afficherMessageFil("message-avatar", MESSAGE_STOCKAGE_PLEIN);
+    return;
+  }
+  utilisateurConnecte.avatar = resultat.dataUrl;
+  afficherAvatarConnecte();
+  afficherLesPosts(); // l'avatar change aussi sur ses posts
+}
+
+/**
+ * Ouvre la fenêtre de choix de fichier quand on clique sur son avatar en haut de la page.
+ * @returns {void}
+ */
+function ouvrirChoixAvatar() {
+  document.getElementById("champ-avatar").click();
+}
+
+/**
  * Déconnecte l'utilisateur et le renvoie à la page de connexion.
  * @returns {void}
  */
@@ -229,18 +434,22 @@ function seDeconnecter() {
 }
 
 /**
- * Branche les événements de la page (publication, compteur, déconnexion).
+ * Branche les événements de la page (publication, compteur, photos, déconnexion).
  * @returns {void}
  */
 function brancherEvenements() {
   // SÉCURITÉ : addEventListener au lieu d'attributs onclick/onsubmit (la CSP interdit le JavaScript inline).
   document.getElementById("formulaire-post").addEventListener("submit", gererPublication);
   document.getElementById("texte-post").addEventListener("input", mettreAJourCompteur);
+  document.getElementById("image-post").addEventListener("change", gererChoixImagePost);
+  document.getElementById("bouton-retirer-image").addEventListener("click", gererRetraitImage);
+  document.getElementById("bouton-avatar").addEventListener("click", ouvrirChoixAvatar);
+  document.getElementById("champ-avatar").addEventListener("change", gererChangementAvatar);
   document.getElementById("bouton-deconnexion").addEventListener("click", seDeconnecter);
 }
 
 /**
- * Point de départ de la page : vérifie la session, puis affiche le pseudo et le fil.
+ * Point de départ de la page : vérifie la session, puis affiche le pseudo, l'avatar et le fil.
  * @returns {void}
  */
 function demarrerFil() {
@@ -253,6 +462,7 @@ function demarrerFil() {
     return;
   }
   document.getElementById("pseudo-connecte").textContent = "@" + utilisateurConnecte.pseudo;
+  afficherAvatarConnecte();
   brancherEvenements();
   mettreAJourCompteur();
   afficherLesPosts();

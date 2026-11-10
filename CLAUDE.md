@@ -24,8 +24,9 @@ loby/
 │   ├── hachage.js      Hachage PBKDF2 des mots de passe + génération des sels.                         (Membre 1)
 │   ├── validation.js   Re-vérification JS des saisies : pseudo, mot de passe, texte du post.           (Membre 4)
 │   ├── comptes.js      Inscription, connexion, limitation des tentatives (sur index.html).             (Membre 1)
+│   ├── images.js       Vérification des photos (type, signature, 5 Mo), redessin canvas → JPEG, affichage. (Membre 2)
 │   ├── posts.js        Publier un post, supprimer un de ses posts (contrôle d'autorisation).           (Membre 2)
-│   └── fil.js          Affichage du fil, likes, déconnexion (sur fil.html).                            (Membre 3)
+│   └── fil.js          Affichage du fil, likes, confirmation de suppression, photos, déconnexion.      (Membre 3)
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons + site.webmanifest (chemins relatifs).
 ├── assets/README-logo.md
@@ -33,10 +34,10 @@ loby/
 ```
 
 Ordre de chargement des scripts (en bas du `<body>`, avec `<script src="...">` uniquement) :
-- `index.html` : stockage.js → validation.js → hachage.js → comptes.js
-- `fil.html` : stockage.js → validation.js → posts.js → fil.js
+- `index.html` : stockage.js → validation.js → hachage.js → images.js → comptes.js
+- `fil.html` : stockage.js → validation.js → images.js → posts.js → fil.js
 
-Limites : **2 pages HTML, 1 fichier CSS, 6 fichiers JS maximum.**
+Limites : **2 pages HTML, 1 fichier CSS, 7 fichiers JS maximum.**
 
 ## 3. Contraintes du prof (non négociables)
 
@@ -50,11 +51,13 @@ Limites : **2 pages HTML, 1 fichier CSS, 6 fichiers JS maximum.**
 
 ## 4. Les 3 fonctionnalités (pas une de plus)
 
-1. **Comptes** : inscription, connexion, déconnexion.
-2. **Posts** : publier un post (280 caractères max), supprimer **uniquement ses propres** posts.
+1. **Comptes** : inscription, connexion, déconnexion, photo de profil facultative (choisie à l'inscription,
+   modifiable depuis le fil ; sinon avatar avec l'initiale du pseudo).
+2. **Posts** : publier un post (280 caractères max, avec une photo facultative), supprimer **uniquement ses propres**
+   posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler, pas de `confirm()`).
 3. **Fil d'actualité** : posts de tous les comptes, **les plus récents en haut**, avec like / retirer son like.
 
-Hors périmètre : images, abonnements, messages privés, modification de post, profil, recherche, commentaires, etc.
+Hors périmètre : plusieurs photos par post, vidéos, abonnements, messages privés, modification de post, profil, recherche, commentaires, etc.
 
 ## 5. Règles de simplicité (aussi importantes que la sécurité)
 
@@ -100,9 +103,10 @@ Hors périmètre : images, abonnements, messages privés, modification de post, 
 Dans **chaque page**, juste après `<meta charset>`, exactement :
 ```html
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
 ```
 - Jamais de `'unsafe-inline'` ni de `'unsafe-eval'`.
+- `data:` est autorisé **uniquement dans `img-src`** (photos stockées en data URL), jamais dans `script-src`.
 - **Tout le JS dans des fichiers `.js` séparés** : pas de `<script>` inline, pas d'attribut `onclick`/`onsubmit`/…
   Les événements se branchent avec `addEventListener`.
 - **Aucun style inline** : pas d'attribut `style="..."`, pas de `<style>`, pas de `element.style.xxx = ...` en JS
@@ -121,9 +125,21 @@ Les mêmes règles dans les attributs HTML et re-vérifiées en JS dans `validat
 | Pseudo | 3 à 20 caractères, lettres sans accent, chiffres, `_` | `required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username"` |
 | Mot de passe (inscription) | 8 à 64 caractères | `required minlength="8" maxlength="64" autocomplete="new-password"` |
 | Mot de passe (connexion) | 8 à 64 caractères | `required minlength="8" maxlength="64" autocomplete="current-password"` |
-| Post | 1 à 280 caractères, pas uniquement des espaces | `required maxlength="280"` |
+| Post | Une photo OU un texte (ou les deux) ; texte de 280 caractères max ; un post vide est refusé en JS | `maxlength="280"` (pas de `required` : texte facultatif avec photo) |
+| Photo (profil, post) | JPEG, PNG ou WebP, 5 Mo max, facultative | `type="file" accept="image/jpeg,image/png,image/webp"` |
 
 - Le pseudo est unique (comparaison sans tenir compte des majuscules, pour éviter `Testeur_1` / `testeur_1`).
+
+### Images (photos de profil et de posts, `images.js`)
+- **Vérifier avant tout traitement** : taille ≤ 5 Mo, type déclaré dans la liste blanche (JPEG, PNG, WebP)
+  **et** premiers octets (JPEG `FF D8 FF`, PNG `89 50 4E 47`, WebP `RIFF....WEBP`). Tout le reste est refusé,
+  en particulier le **SVG** (il peut contenir du JavaScript).
+- **Redessiner dans un `<canvas>`** puis exporter en JPEG qualité 0,7 : supprime les métadonnées EXIF (GPS, téléphone)
+  et tout contenu caché. Avatar : 128×128 recadré au centre. Photo de post : 800 px de large maximum.
+- Stockage en **data URL** (champ `avatar` de l'utilisateur, champ `image` du post). Gérer `QuotaExceededError`
+  avec le message « Stockage plein : supprimez d'anciens posts. ».
+- **Avant d'afficher**, vérifier que la data URL commence par `data:image/jpeg;base64,` ; sinon, ne pas l'afficher.
+- Affichage avec `createElement("img")`, `img.src = ...`, un `alt` explicite. Jamais `innerHTML`.
 
 ### Connexion et session
 - **Message d'erreur générique** : « Identifiants incorrects », que le pseudo existe ou non.

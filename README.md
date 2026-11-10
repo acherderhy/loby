@@ -5,7 +5,7 @@
 **Loby** est un mini réseau social type Twitter, réalisé en groupe de 4 dans le cadre d'un cours
 mêlant développement, IA et cybersécurité. Il fonctionne **entièrement dans le navigateur** :
 HTML, CSS et JavaScript vanilla, sans backend, sans framework et sans librairie externe.
-Les données sont enregistrées dans le `localStorage` du navigateur.
+Les données (photos comprises) sont enregistrées dans le `localStorage` du navigateur.
 
 L'objectif du projet est d'appliquer les **bonnes pratiques de sécurité web** : hachage des mots de passe,
 protection contre le XSS, Content-Security-Policy, validation des saisies, contrôle d'autorisation.
@@ -39,8 +39,9 @@ loby/
 │   ├── hachage.js      Hachage PBKDF2 des mots de passe.
 │   ├── validation.js   Vérification des saisies.
 │   ├── comptes.js      Inscription, connexion, limitation des tentatives.
+│   ├── images.js       Vérification et redessin des photos (profil, posts).
 │   ├── posts.js        Publication et suppression des posts.
-│   └── fil.js          Affichage du fil, likes, déconnexion.
+│   └── fil.js          Affichage du fil, likes, confirmation de suppression, photos, déconnexion.
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons et site.webmanifest.
 ├── assets/README-logo.md   Documentation du kit logo.

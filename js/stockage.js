@@ -11,6 +11,9 @@ const CLE_POSTS = "loby_posts";
 const CLE_TENTATIVES = "loby_tentatives";
 const CLE_SESSION = "loby_session";
 
+// Message affiché quand le localStorage est plein (environ 5 Mo par site, photos comprises).
+const MESSAGE_STOCKAGE_PLEIN = "Stockage plein : supprimez d'anciens posts.";
+
 /**
  * Lit une donnée du localStorage et la transforme de texte JSON en objet JavaScript.
  * @param {string} cle - Le nom de la donnée dans le localStorage.
@@ -36,15 +39,25 @@ function lireDonnee(cle, valeurParDefaut) {
  * Enregistre une donnée dans le localStorage, transformée en texte JSON.
  * @param {string} cle - Le nom de la donnée dans le localStorage.
  * @param {*} valeur - La donnée à enregistrer (liste ou objet).
- * @returns {void}
+ * @returns {boolean} true si c'est enregistré, false si le stockage est plein.
  */
 function enregistrerDonnee(cle, valeur) {
-  localStorage.setItem(cle, JSON.stringify(valeur));
+  // Le localStorage est limité (environ 5 Mo par site) : avec des photos, il peut être plein.
+  // setItem lève alors une erreur QuotaExceededError, qu'on rattrape pour afficher un message clair.
+  try {
+    localStorage.setItem(cle, JSON.stringify(valeur));
+    return true;
+  } catch (erreur) {
+    if (erreur.name === "QuotaExceededError") {
+      return false;
+    }
+    throw erreur; // une autre erreur, inattendue : on la laisse remonter
+  }
 }
 
 /**
  * Lit la liste des utilisateurs inscrits.
- * @returns {Array<Object>} Liste de { id, pseudo, sel, hachage, dateCreation }.
+ * @returns {Array<Object>} Liste de { id, pseudo, sel, hachage, avatar, dateCreation } (avatar : "" ou data URL).
  */
 function lireUtilisateurs() {
   return lireDonnee(CLE_UTILISATEURS, []);
@@ -53,15 +66,31 @@ function lireUtilisateurs() {
 /**
  * Enregistre la liste des utilisateurs.
  * @param {Array<Object>} utilisateurs - La liste complète des utilisateurs.
- * @returns {void}
+ * @returns {boolean} true si c'est enregistré, false si le stockage est plein.
  */
 function enregistrerUtilisateurs(utilisateurs) {
-  enregistrerDonnee(CLE_UTILISATEURS, utilisateurs);
+  return enregistrerDonnee(CLE_UTILISATEURS, utilisateurs);
+}
+
+/**
+ * Remplace la photo de profil d'un utilisateur.
+ * @param {string} idUtilisateur - L'identifiant de l'utilisateur.
+ * @param {string} avatar - La nouvelle photo en data URL.
+ * @returns {boolean} true si c'est enregistré, false si le stockage est plein.
+ */
+function enregistrerAvatar(idUtilisateur, avatar) {
+  const utilisateurs = lireUtilisateurs();
+  for (let i = 0; i < utilisateurs.length; i++) {
+    if (utilisateurs[i].id === idUtilisateur) {
+      utilisateurs[i].avatar = avatar;
+    }
+  }
+  return enregistrerUtilisateurs(utilisateurs);
 }
 
 /**
  * Lit la liste des posts, dans l'ordre où ils ont été publiés (le plus ancien en premier).
- * @returns {Array<Object>} Liste de { id, auteurId, texte, date, likes }.
+ * @returns {Array<Object>} Liste de { id, auteurId, texte, image, date, likes } (image : "" ou data URL).
  */
 function lirePosts() {
   return lireDonnee(CLE_POSTS, []);
@@ -70,10 +99,10 @@ function lirePosts() {
 /**
  * Enregistre la liste des posts.
  * @param {Array<Object>} posts - La liste complète des posts.
- * @returns {void}
+ * @returns {boolean} true si c'est enregistré, false si le stockage est plein.
  */
 function enregistrerPosts(posts) {
-  enregistrerDonnee(CLE_POSTS, posts);
+  return enregistrerDonnee(CLE_POSTS, posts);
 }
 
 /**

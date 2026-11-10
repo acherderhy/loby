@@ -32,15 +32,21 @@ function motDePasseEstValide(motDePasse) {
 }
 
 /**
- * Vérifie que le texte du post fait entre 1 et 280 caractères et ne contient pas que des espaces.
- * @param {string} texte - Le texte du post saisi par l'utilisateur.
- * @returns {boolean} true si le texte est valide, sinon false.
+ * Vérifie le contenu d'un post : texte de 280 caractères maximum, et au moins une photo OU un texte.
+ * @param {string} texte - Le texte du post (facultatif s'il y a une photo).
+ * @param {string} image - La photo en data URL, ou "" s'il n'y en a pas.
+ * @returns {boolean} true si le post est valide, sinon false.
  */
-function textePostEstValide(texte) {
+function contenuPostEstValide(texte, image) {
   if (texte.length > 280) {
     return false;
   }
   // trim() enlève les espaces et retours à la ligne au début et à la fin :
-  // s'il ne reste rien, le post est vide.
-  return texte.trim() !== "";
+  // s'il reste quelque chose, le post a un vrai texte.
+  if (texte.trim() !== "") {
+    return true;
+  }
+  // SÉCURITÉ : pas de texte ? Alors une photo est obligatoire. Un post vide (ni texte ni photo)
+  // est toujours refusé, même si on retire les contrôles HTML avec F12 ou qu'on appelle publierPost depuis la console.
+  return image !== "";
 }

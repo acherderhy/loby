@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <!--
   Fichier : fil.html
-  Rôle    : page du fil d'actualité de Loby (réservée aux utilisateurs connectés) : formulaire de publication
-            et liste des posts de tous les comptes, du plus récent au plus ancien.
+  Rôle    : page du fil d'actualité de Loby (réservée aux utilisateurs connectés) : avatar modifiable,
+            formulaire de publication (avec photo facultative) et liste des posts de tous les comptes,
+            du plus récent au plus ancien.
   Membre  : Membre 3 (fil d'actualité et interface)
 -->
 <html lang="fr">
@@ -16,14 +17,19 @@
     - default-src 'self' : par défaut, uniquement des fichiers venant de notre propre site.
     - script-src 'self' : scripts seulement depuis nos fichiers .js (aucun <script> inline, aucun onclick, pas d'eval).
     - style-src 'self'  : styles seulement depuis css/style.css (aucun attribut style="..." ni <style>).
-    - img-src 'self'    : images seulement depuis notre site (pas d'image piégée chargée ailleurs).
+    - img-src 'self' data: : images depuis notre site, ou écrites directement dans la page sous forme de
+      « data URL » (texte "data:image/jpeg;base64,..."). C'est nécessaire car les photos (profil et posts)
+      sont gardées dans le localStorage sous cette forme. C'est sans danger : data: n'est autorisé QUE pour
+      les images, pas pour les scripts (script-src reste 'self'), une image affichée dans <img> ne peut pas
+      exécuter de JavaScript, et images.js n'affiche que des JPEG redessinés par notre canvas.
+      Aucune adresse externe n'est autorisée : pas d'image piégée chargée depuis un autre site.
     - object-src 'none' : aucun plugin (<object>, <embed>), souvent utilisés pour exécuter du code.
     - base-uri 'self'   : empêche d'injecter une balise <base> qui détournerait tous nos chemins relatifs.
     - form-action 'self': les formulaires ne peuvent envoyer leurs données que vers notre site (pas de vol de données).
     Placée juste après charset pour s'appliquer avant le chargement de toute autre ressource.
   -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
 
   <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -52,6 +58,11 @@
   <header class="en-tete en-tete--fil">
     <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
     <div class="utilisateur">
+      <!-- Avatar de l'utilisateur connecté (rempli en JS) : un clic ouvre le choix d'une nouvelle photo de profil. -->
+      <button type="button" id="bouton-avatar" class="bouton-avatar" aria-label="Changer ma photo de profil"
+              title="Changer ma photo de profil"></button>
+      <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+      <input type="file" id="champ-avatar" accept="image/jpeg,image/png,image/webp" hidden>
       <!-- Pseudo de l'utilisateur connecté, écrit en JS avec textContent (fil.js). -->
       <span id="pseudo-connecte" class="utilisateur-pseudo"></span>
       <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
@@ -61,15 +72,30 @@
   <main class="contenu">
     <h1 class="titre-cache">Fil d'actualité</h1>
 
+    <!-- Erreurs liées au changement de photo de profil (fichier refusé, stockage plein). -->
+    <p id="message-avatar" class="message-erreur message-erreur--haut" aria-live="polite"></p>
+
     <!-- Formulaire de publication. -->
     <section class="carte">
       <!--
-        SÉCURITÉ : validation HTML (required, maxlength="280"), revérifiée en JavaScript (validation.js)
-        car ces attributs se contournent avec F12. Pas d'attribut "action" : l'envoi est géré en JS (fil.js).
+        SÉCURITÉ : validation HTML (maxlength="280"), revérifiée en JavaScript (validation.js) car cet attribut
+        se contourne avec F12. Pas de "required" sur le texte : il est facultatif quand une photo est choisie.
+        La règle « une photo OU un texte » est vérifiée en JavaScript (validation.js, posts.js).
+        Pas d'attribut "action" : l'envoi est géré en JS (fil.js).
       -->
       <form id="formulaire-post" class="formulaire">
-        <label for="texte-post">Quoi de neuf ?</label>
-        <textarea id="texte-post" name="texte" rows="3" required maxlength="280"></textarea>
+        <label for="image-post">Photo (facultatif)</label>
+        <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+        <input type="file" id="image-post" name="image" accept="image/jpeg,image/png,image/webp">
+        <!-- Aperçu de la photo avant publication (caché tant qu'aucune photo n'est choisie). -->
+        <div id="zone-apercu" class="apercu" hidden>
+          <div id="apercu-photo"></div>
+          <button type="button" id="bouton-retirer-image" class="bouton bouton--danger">Retirer la photo</button>
+        </div>
+
+        <!-- Libellé changé en JS (fil.js) : « Description » quand une photo est choisie, « Quoi de neuf ? » sinon. -->
+        <label for="texte-post" id="libelle-texte-post">Quoi de neuf ?</label>
+        <textarea id="texte-post" name="texte" rows="3" maxlength="280"></textarea>
         <div class="formulaire-pied">
           <!-- Compteur de caractères restants, mis à jour à chaque frappe (fil.js). -->
           <span id="compteur" class="compteur" aria-live="polite"></span>
@@ -94,6 +120,7 @@
   -->
   <script src="js/stockage.js"></script>
   <script src="js/validation.js"></script>
+  <script src="js/images.js"></script>
   <script src="js/posts.js"></script>
   <script src="js/fil.js"></script>
 </body>

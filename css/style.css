@@ -44,8 +44,8 @@ body {
   border-bottom: 1px solid var(--couleur-bordure);
 }
 
-/* Le logo garde ses proportions. */
-.en-tete img {
+/* Le logo (enfant direct de l'en-tête, pas l'avatar) garde ses proportions. */
+.en-tete > img {
   display: block;
   width: auto;
 }
@@ -67,6 +67,42 @@ body {
 
 .utilisateur-pseudo {
   font-weight: 600;
+}
+
+/* ---------- Avatars ---------- */
+
+/* Photo de profil : petit rond de 40 px. object-fit: cover remplit le rond sans déformer l'image. */
+.avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Avatar par défaut (pas de photo) : rond bleu avec l'initiale du pseudo en blanc, centrée. */
+.avatar--initiale {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #FFFFFF;
+  background-color: var(--couleur-principale);
+}
+
+/* Bouton invisible autour de l'avatar du haut (clic = changer sa photo de profil). */
+.bouton-avatar {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.bouton-avatar:hover {
+  outline: 2px solid var(--couleur-accent);
+  outline-offset: 2px;
 }
 
 /* ---------- Mise en page ---------- */
@@ -158,6 +194,26 @@ body {
   resize: vertical;
 }
 
+/* Champ de choix de fichier (photos) : un peu moins haut que les champs texte. */
+.formulaire input[type="file"] {
+  padding: 8px;
+  background-color: var(--couleur-fond-doux);
+}
+
+/* Aperçu de la photo avant publication (caché par l'attribut hidden tant qu'aucune photo n'est choisie).
+   Volontairement aucune règle « display » ici : elle écraserait l'attribut hidden. */
+.apercu {
+  margin-top: 8px;
+}
+
+.apercu-image {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+
 /* Contour bien visible sur le champ actif (utile au clavier). */
 .formulaire input:focus,
 .formulaire textarea:focus {
@@ -207,6 +263,11 @@ body {
   display: none;
 }
 
+/* Message tout en haut de la page (erreurs de photo de profil). */
+.message-erreur--haut {
+  margin: 0 0 12px;
+}
+
 /* ---------- Boutons ---------- */
 
 .bouton {
@@ -219,7 +280,8 @@ body {
 }
 
 .bouton:focus-visible,
-.bouton-like:focus-visible {
+.bouton-like:focus-visible,
+.bouton-avatar:focus-visible {
   outline: 2px solid var(--couleur-principale);
   outline-offset: 2px;
 }
@@ -257,6 +319,19 @@ body {
   border-color: var(--couleur-erreur);
 }
 
+/* Petit bouton neutre (« Annuler » de la confirmation de suppression). */
+.bouton--petit {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  color: var(--couleur-texte);
+  background-color: var(--couleur-fond);
+  border-color: var(--couleur-bordure);
+}
+
+.bouton--petit:hover {
+  border-color: var(--couleur-texte);
+}
+
 /* ---------- Posts ---------- */
 
 .post {
@@ -267,11 +342,11 @@ body {
   border-radius: 12px;
 }
 
-/* Pseudo et date sur la même ligne (passage à la ligne sur petit écran). */
+/* Avatar, pseudo et date sur la même ligne (passage à la ligne sur petit écran). */
 .post-en-tete {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
 }
 
@@ -287,10 +362,32 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Photo d'un post (affichée avant le texte) : jamais plus large que la carte, coins arrondis. */
+.post-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+
+/* flex-wrap : sur téléphone, la confirmation de suppression passe à la ligne au lieu de déborder. */
 .post-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+
+/* « Supprimer ce post ? » suivi des boutons Oui et Annuler. */
+.confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .bouton-like {

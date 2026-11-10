@@ -1,6 +1,7 @@
 /*
   Fichier : js/posts.js
-  Rôle    : publier un post et supprimer un post, avec contrôle que seul l'auteur peut supprimer le sien.
+  Rôle    : publier un post (avec une photo facultative) et supprimer un post, avec contrôle que seul
+            l'auteur peut supprimer le sien.
   Membre  : Membre 2
 */
 
@@ -20,26 +21,35 @@ function trouverIndexPost(posts, idPost) {
 }
 
 /**
- * Publie un nouveau post (ajouté à la fin de la liste) après avoir vérifié son texte.
+ * Publie un nouveau post (ajouté à la fin de la liste) après avoir vérifié son texte et sa photo.
  * @param {string} texte - Le texte du post.
+ * @param {string} image - La photo en data URL, ou "" s'il n'y en a pas.
  * @param {string} idAuteur - L'identifiant de l'utilisateur connecté.
- * @returns {boolean} true si le post a été publié, false si le texte est invalide.
+ * @returns {string} Le message d'erreur, ou "" si le post a été publié.
  */
-function publierPost(texte, idAuteur) {
-  // SÉCURITÉ : revérification JS de la longueur (le maxlength du HTML est contournable avec F12).
-  if (!textePostEstValide(texte)) {
-    return false;
+function publierPost(texte, image, idAuteur) {
+  // SÉCURITÉ : revérification JS (le maxlength du HTML est contournable avec F12) : 280 caractères maximum,
+  // et une photo OU un texte. Un post vide est refusé, même si cette fonction est appelée depuis la console.
+  if (!contenuPostEstValide(texte, image)) {
+    return "Le post doit contenir une photo ou un texte (280 caractères maximum).";
+  }
+  // SÉCURITÉ : on n'enregistre qu'une photo produite par notre canvas (JPEG en data URL), voir images.js.
+  if (image !== "" && !imageEstSure(image)) {
+    return "Photo invalide.";
   }
   const posts = lirePosts();
   posts.push({
     id: crypto.randomUUID(),
     auteurId: idAuteur,
     texte: texte,
+    image: image,
     date: new Date().toISOString(),
     likes: []
   });
-  enregistrerPosts(posts);
-  return true;
+  if (!enregistrerPosts(posts)) {
+    return MESSAGE_STOCKAGE_PLEIN;
+  }
+  return "";
 }
 
 /**
