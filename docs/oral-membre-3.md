@@ -1,4 +1,4 @@
-# Fiche d'oral — Membre 3 : fil d'actualité, likes, interface et anti-XSS
+# Fiche d'oral — Acher : fil d'actualité, likes, interface et anti-XSS
 
 Fichiers : `js/fil.js`, `css/style.css`, `fil.html`.
 
@@ -93,5 +93,6 @@ si mon identifiant est déjà dans la liste je le retire, sinon je l'ajoute : il
 
 ## En mes mots
 
-<!-- À compléter par le Membre 3 : reformuler la partie avec ses propres mots. -->
+Moi, je m'occupe de tout ce qu'on voit sur la page du fil : les posts, les likes et le bouton supprimer. Le plus important dans ma partie, c'est qu'un utilisateur ne puisse pas pirater le site en écrivant du code dans un post. Pour ça, je n'utilise jamais innerHTML : j'écris le texte avec textContent, donc le navigateur l'affiche comme du simple texte et ne l'exécute jamais. Si quelqu'un écrit une balise piégée, elle apparaît telle quelle à l'écran et il ne se passe rien.
 
+Pour le reste, j'ai fait en sorte que ce soit simple et logique : les posts les plus récents s'affichent en haut, on ne peut liker qu'une fois chaque post, et on ne peut supprimer que ses propres posts, avec une confirmation avant. Et si quelqu'un essaie d'ouvrir la page du fil sans être connecté, il est renvoyé directement vers la page de connexion.
