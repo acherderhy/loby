@@ -69,7 +69,7 @@ Limites : **4 pages HTML, 1 fichier CSS, 10 fichiers JS maximum** (v2 : 4 pages 
 - **Aucun framework, aucune librairie externe, aucun CDN**, aucune police externe (pas de Google Fonts).
 - Données stockées dans le navigateur : **localStorage** (données) et **sessionStorage** (session).
 - **Aucune donnée personnelle réelle** dans le dépôt : pas de vrais noms, emails ou mots de passe,
-  même dans des exemples, des tests ou des données de démo.
+  même dans des exemples, des tests ou des données de démo (seule exception : les prénoms de l'équipe, voir section 9).
 - Un fichier `cadrage.md` et un fichier `README.md` à la racine.
 - Code commenté (voir section 6).
 
@@ -190,5 +190,7 @@ Les mêmes règles dans les attributs HTML et re-vérifiées en JS dans `validat
 
 - **Expliquer le plan avant d'exécuter** une étape importante.
 - **Ne jamais faire de commit ni de push** sans demande explicite.
-- Ne pas mettre de prénoms : on écrit « Membre 1 » … « Membre 4 ».
+- Les prénoms de l'équipe (sans nom de famille) sont autorisés **uniquement** dans la répartition du travail des documents
+  (Liora = Membre 1, Nathan = Membre 2, Acher = Membre 3, Eden = Membre 4). Dans le code, on garde « Membre N ».
+  Toute autre donnée personnelle reste interdite.
 - Tester en local avec `python3 -m http.server 8000` (pas en `file://`) et vérifier la console : aucune erreur CSP.

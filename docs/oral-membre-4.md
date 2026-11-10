@@ -16,6 +16,8 @@ puis en JavaScript, et je documente le projet, ses protections et ses limites.
 5. Pour les saisies, on a les règles dans le HTML avec `required`, `minlength`, `maxlength` et `pattern`, mais ça se supprime en deux secondes avec F12.
 6. C'est pour ça que je revérifie exactement les mêmes règles en JavaScript dans `validation.js`, avant tout enregistrement.
 7. Enfin, j'ai rédigé le cadrage et le fichier SECURITE.md, qui expliquent honnêtement ce qu'un site sans serveur ne peut pas protéger.
+8. Dans la version 2 branchée sur Supabase, les données sont partagées entre tous les utilisateurs au lieu de rester dans un seul navigateur.
+9. Et la sécurité y est vérifiée par le serveur grâce aux règles RLS, que l'utilisateur ne peut pas contourner depuis son navigateur.
 
 ## Le code à montrer
 
@@ -96,6 +98,10 @@ Il faudrait un en-tête HTTP, et GitHub Pages ne permet pas d'en ajouter.
 **4. Pourquoi aucune librairie, aucun CDN, aucune police Google ?**
 Chaque ressource externe est une porte d'entrée : si le CDN est compromis, son code s'exécute chez nous.
 En plus, la CSP peut rester à `'self'`, et aucune requête ne part vers un autre site avec l'adresse IP de l'utilisateur.
+
+**5. Pourquoi la clé Supabase est-elle visible dans le code ?**
+C'est la clé « anon », publique par conception : elle est faite pour être dans le navigateur. La sécurité ne vient pas du secret
+de cette clé, mais des règles RLS dans la base, qui décident qui peut lire, écrire ou supprimer. La clé `service_role`, elle, n'est jamais dans le dépôt.
 
 ## En mes mots
 Moi, je présente la sécurité générale du site. Chaque page a une règle de sécurité, la CSP, qui dit au navigateur de n'exécuter que nos propres fichiers : un script injecté par un pirate est bloqué. Toutes les saisies sont vérifiées deux fois, dans le HTML puis dans le JavaScript, parce que le HTML peut être contourné.

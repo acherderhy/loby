@@ -1,6 +1,6 @@
 # Étape 5 : fiches d'oral et scénario de démo
 
-Modèle utilisé : Opus 5.5, sans mode Plan (documentation uniquement, aucun changement de code).
+Modèle utilisé : Sonnet 5.5, sans mode Plan (documentation uniquement, aucun changement de code).
 
 ```
 Crée un dossier docs/ avec 5 fichiers, en relisant le VRAI code (pas de mémoire) :

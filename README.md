@@ -103,9 +103,9 @@ Détails : [v2/README.md](v2/README.md) et la section « Version 2 » de [SECURI
 
 | Membre | Responsabilité | Fichiers |
 |---|---|---|
-| **Membre 1** | Comptes, hachage des mots de passe et page Profil | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
-| **Membre 2** | Posts, page Publier, contrôle d'autorisation et sécurité des photos | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
-| **Membre 3** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
-| **Membre 4** | CSP, validation des saisies, documentation | `js/validation.js`, `index.html`, `README.md`, `cadrage.md`, `SECURITE.md` |
+| **Liora** | Comptes, hachage des mots de passe et page Profil | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
+| **Nathan** | Posts, page Publier, contrôle d'autorisation et sécurité des photos | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
+| **Acher** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
+| **Eden** | CSP, validation des saisies, documentation | `js/validation.js`, `index.html`, `README.md`, `cadrage.md`, `SECURITE.md` |
 
 Le fichier `js/stockage.js` est commun aux 4 membres.

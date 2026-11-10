@@ -138,10 +138,10 @@ Il faudrait un serveur et du chiffrement.
 
 | Membre | Responsabilité | Fichiers |
 |---|---|---|
-| **Membre 1** | Comptes (inscription, connexion, déconnexion, limitation des tentatives, page Profil) et hachage des mots de passe | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
-| **Membre 2** | Posts (page Publier, supprimer), contrôle d'autorisation et sécurité des photos (vérification, redessin, affichage) | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
-| **Membre 3** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
-| **Membre 4** | CSP, validation globale des saisies, README et cadrage | `js/validation.js`, `index.html` (en-têtes de sécurité des 4 pages), `README.md`, `cadrage.md` |
+| **Liora** | Comptes (inscription, connexion, déconnexion, limitation des tentatives, page Profil) et hachage des mots de passe | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
+| **Nathan** | Posts (page Publier, supprimer), contrôle d'autorisation et sécurité des photos (vérification, redessin, affichage) | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
+| **Acher** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
+| **Eden** | CSP, validation globale des saisies, README et cadrage | `js/validation.js`, `index.html` (en-têtes de sécurité des 4 pages), `README.md`, `cadrage.md` |
 
 Le fichier `js/stockage.js` (lecture/écriture des données et de la session) est commun : il est écrit en premier,
 ensemble, car toutes les fonctionnalités en dépendent.
