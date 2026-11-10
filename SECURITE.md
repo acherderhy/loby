@@ -75,7 +75,47 @@ En production, il faudrait :
 - le **stockage des images sur un serveur**, avec vérifications côté serveur ;
 - des **journaux** pour détecter les attaques, et HTTPS partout.
 
-## 4. Comment nous avons utilisé l'IA
+## 4. Version 2 (bonus) : données partagées avec Supabase
+
+Le dossier [v2/](v2/) branche la même interface sur Supabase (base PostgreSQL hébergée). Toutes les protections
+côté navigateur de la v1 sont gardées (CSP, `textContent`, validation HTML + JS, vérification et redessin des photos) ;
+la différence est que **le serveur a maintenant le dernier mot**.
+
+### Ce qui protège la v2
+
+| Protection | Attaque bloquée | Où |
+|---|---|---|
+| **RLS** (*Row Level Security*) activée sur `profiles`, `posts`, `likes` : seuls les connectés lisent ; on publie, like et supprime seulement en son nom ; on ne modifie que son propre profil | Supprimer le post d'un autre, publier ou liker au nom d'un autre, même en écrivant ses propres requêtes `fetch` | `v2/supabase.sql` (règles `create policy`) |
+| **Droits explicites** (`grant`) : rien n'est accessible par défaut ; les visiteurs non connectés (`anon`) n'ont aucun droit ; seule la colonne `avatar` est modifiable | Lecture des données sans compte ; changement de son pseudo pour usurper quelqu'un | `v2/supabase.sql` (section 6) |
+| **Contraintes `check` en base** : pseudo `[A-Za-z0-9_]{3,20}` unique sans tenir compte des majuscules, texte de 280 caractères max, post vide refusé, photos uniquement en `data:image/jpeg;base64,` de taille limitée | Données hors règles envoyées directement à l'API, en contournant notre JavaScript | `v2/supabase.sql` |
+| **`auteur_id` et `user_id` remplis par la base** (`default auth.uid()`) | Usurpation : le navigateur n'envoie jamais l'auteur | `v2/supabase.sql`, `v2/js/fil.js` (`publierPost`) |
+| **Clé anon publique par conception** : elle identifie le projet mais ne donne aucun droit seule ; la clé `service_role` n'est jamais dans le code | Fuite d'une clé qui contournerait les règles RLS | `v2/js/config.js` |
+| **CSP + `connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co`** | Exfiltration : un script injecté ne pourrait pas envoyer le jeton ou les données vers un autre serveur | `v2/index.html`, `v2/fil.html` |
+| **`encodeURIComponent`** sur les valeurs placées dans l'adresse des requêtes | Ajout de filtres dans la requête par une valeur piégée | `v2/js/supabase.js` (`filtreEgal`) |
+| **Session = jeton signé** (`access_token`) + identifiant dans le `sessionStorage` ; réponse 401 → session effacée et retour à la connexion | Session falsifiée : un jeton modifié est refusé par le serveur | `v2/js/supabase.js` (`ouvrirSession`, `appelerRest`) |
+| **Message générique** « Identifiants incorrects » ; « Ce pseudo est déjà pris ou invalide. » à l'inscription | Énumération des comptes à la connexion | `v2/js/comptes.js` |
+
+### Limites de la v1 corrigées par la v2
+
+| Limite de la v1 | Dans la v2 |
+|---|---|
+| Session falsifiable (on écrit l'identifiant d'un autre dans le `sessionStorage`) | La base ne croit que le jeton, signé par Supabase : un jeton modifié est refusé (testé : redirection vers la connexion). |
+| Hachages et sels lisibles dans le `localStorage` | Les mots de passe partent en HTTPS et sont hachés et gardés par le serveur : aucun hachage n'est visible dans le navigateur. |
+| Blocage des tentatives contournable (compteur dans le navigateur) | La limitation est faite par le serveur Supabase (réponse 429) : effacer son navigateur ne la remet pas à zéro. |
+| Contrôle d'autorisation contournable, données non partagées | Les règles RLS s'appliquent à toutes les requêtes, et tous les utilisateurs partagent la même base. |
+
+### Ce qui reste
+
+- **Clickjacking** : la CSP est toujours dans une balise `<meta>`, où `frame-ancestors` est ignoré, et GitHub Pages
+  ne permet pas d'ajouter l'en-tête HTTP qui la porterait.
+- **Jeton lisible par un script** : en cas de XSS, un script pourrait lire le jeton dans le `sessionStorage`
+  (un cookie `HttpOnly` demanderait notre propre serveur). D'où l'importance de la CSP et de `textContent`.
+- **Jeton valable jusqu'à son expiration** : après la déconnexion, un jeton déjà copié reste accepté jusqu'à
+  son expiration (1 heure). C'est le fonctionnement normal des jetons JWT de Supabase.
+- **Pseudo transformé en email** (`pseudo@acherderhy.github.io`, jamais affiché) : Supabase exige un email ; le domaine
+  est celui de notre GitHub Pages, et aucun email n'est envoyé (« Confirm email » désactivé).
+
+## 5. Comment nous avons utilisé l'IA
 
 - **Claude Code** a écrit le code, étape par étape, à partir de nos consignes.
 - Un fichier **[CLAUDE.md](CLAUDE.md)** impose à chaque étape les règles du projet : simplicité (niveau Bachelor 3),

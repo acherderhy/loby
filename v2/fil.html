@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!--
+  Fichier : v2/fil.html
+  Rôle    : page du fil de la version 2 de Loby (réservée aux utilisateurs connectés) : avatar modifiable,
+            formulaire de publication (avec photo facultative) et posts de tous les utilisateurs, lus dans Supabase.
+  Membre  : Membre 3 (fil d'actualité et interface)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP), la même qu'en version 1 (voir ../fil.html pour le détail
+    de chaque directive), avec UNE directive en plus :
+    - connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co : fetch() ne peut contacter que notre site
+      et NOTRE projet Supabase. Si un attaquant réussissait à injecter du code, il ne pourrait pas envoyer
+      les données (jeton de connexion, posts) vers son propre serveur : le navigateur bloquerait la requête.
+    data: reste autorisé uniquement pour les images (photos en data URL), jamais pour les scripts.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby v2 — Fil d'actualité</title>
+
+  <!-- Icônes et feuille de style de la version 1, réutilisées (chemins RELATIFS : ../ remonte d'un dossier). -->
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/favicon/site.webmanifest">
+  <meta name="theme-color" content="#2F54EB">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Bandeau de la version 2 (styles déjà existants : en-tete + aide). -->
+  <p class="en-tete aide">Version 2 : données partagées (Supabase). <a href="../index.html">Revenir à la version 1</a></p>
+
+  <header class="en-tete en-tete--fil">
+    <img src="../assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+    <div class="utilisateur">
+      <!-- Avatar de l'utilisateur connecté (rempli en JS) : un clic ouvre le choix d'une nouvelle photo de profil. -->
+      <button type="button" id="bouton-avatar" class="bouton-avatar" aria-label="Changer ma photo de profil"
+              title="Changer ma photo de profil"></button>
+      <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+      <input type="file" id="champ-avatar" accept="image/jpeg,image/png,image/webp" hidden>
+      <!-- Pseudo de l'utilisateur connecté, écrit en JS avec textContent (js/fil.js). -->
+      <span id="pseudo-connecte" class="utilisateur-pseudo"></span>
+      <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
+    </div>
+  </header>
+
+  <main class="contenu">
+    <h1 class="titre-cache">Fil d'actualité</h1>
+
+    <!-- Erreurs liées au changement de photo de profil. -->
+    <p id="message-avatar" class="message-erreur message-erreur--haut" aria-live="polite"></p>
+
+    <!-- Formulaire de publication. -->
+    <section class="carte">
+      <!--
+        SÉCURITÉ : validation HTML (maxlength="280"), revérifiée en JavaScript (../js/validation.js)
+        puis par la base (contraintes check : 280 caractères maximum, post vide refusé).
+        Pas d'attribut "action" : l'envoi est géré en JS (js/fil.js).
+      -->
+      <form id="formulaire-post" class="formulaire">
+        <label for="image-post">Photo (facultatif)</label>
+        <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+        <input type="file" id="image-post" name="image" accept="image/jpeg,image/png,image/webp">
+        <!-- Aperçu de la photo avant publication (caché tant qu'aucune photo n'est choisie). -->
+        <div id="zone-apercu" class="apercu" hidden>
+          <div id="apercu-photo"></div>
+          <button type="button" id="bouton-retirer-image" class="bouton bouton--danger">Retirer la photo</button>
+        </div>
+
+        <!-- Libellé changé en JS : « Description » quand une photo est choisie, « Quoi de neuf ? » sinon. -->
+        <label for="texte-post" id="libelle-texte-post">Quoi de neuf ?</label>
+        <textarea id="texte-post" name="texte" rows="3" maxlength="280"></textarea>
+        <div class="formulaire-pied">
+          <span id="compteur" class="compteur" aria-live="polite"></span>
+          <button type="submit" id="bouton-publier" class="bouton bouton--principal">Publier</button>
+        </div>
+        <p id="message-publication" class="message-erreur" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- Le fil : les posts sont construits en JS avec createElement + textContent (jamais innerHTML). -->
+    <section aria-labelledby="titre-fil">
+      <h2 id="titre-fil" class="titre-section">Fil</h2>
+      <p id="message-fil" class="message-erreur" aria-live="polite"></p>
+      <div id="liste-posts"></div>
+    </section>
+  </main>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). validation.js et images.js sont ceux de la version 1, réutilisés sans copie.
+    js/fil.js vérifie la session dès son chargement et redirige vers index.html si personne n'est connecté.
+  -->
+  <script src="../js/validation.js"></script>
+  <script src="../js/images.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/fil.js"></script>
+</body>
+</html>

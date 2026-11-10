@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!--
+  Fichier : v2/index.html
+  Rôle    : page d'accueil de la version 2 de Loby (données partagées avec Supabase), avec les formulaires
+            « Créer un compte » et « Se connecter ». Après une inscription ou une connexion réussie : fil.html.
+  Membre  : Membre 4 (en-têtes de sécurité) et Membre 1 (formulaires de comptes)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP), la même qu'en version 1 (voir ../index.html pour le détail
+    de chaque directive), avec UNE directive en plus :
+    - connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co : fetch() ne peut contacter que notre site
+      et NOTRE projet Supabase. Si un attaquant réussissait à injecter du code, il ne pourrait pas envoyer
+      les données (jeton de connexion, posts) vers son propre serveur : le navigateur bloquerait la requête.
+    data: reste autorisé uniquement pour les images (photos en data URL), jamais pour les scripts.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby v2 — Connexion</title>
+
+  <!-- Icônes et feuille de style de la version 1, réutilisées (chemins RELATIFS : ../ remonte d'un dossier). -->
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/favicon/site.webmanifest">
+  <meta name="theme-color" content="#2F54EB">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Bandeau de la version 2 (styles déjà existants : en-tete + aide). -->
+  <p class="en-tete aide">Version 2 : données partagées (Supabase). <a href="../index.html">Revenir à la version 1</a></p>
+
+  <header class="en-tete">
+    <img src="../assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+  </header>
+
+  <main class="contenu contenu--accueil">
+    <h1 class="accroche">Partagez vos idées en 280 caractères.</h1>
+
+    <div class="grille-formulaires">
+      <!-- Formulaire d'inscription. -->
+      <section class="carte">
+        <h2 class="carte-titre">Créer un compte</h2>
+        <!--
+          SÉCURITÉ : validation HTML (required, minlength, maxlength, pattern), revérifiée en JavaScript
+          (../js/validation.js) puis par la base Supabase elle-même (contrainte check sur le pseudo).
+          Pas d'attribut "action" : l'envoi est géré en JS (js/comptes.js).
+        -->
+        <form id="formulaire-inscription" class="formulaire">
+          <label for="inscription-pseudo">Pseudo</label>
+          <input type="text" id="inscription-pseudo" name="pseudo"
+                 required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username">
+          <p class="aide">3 à 20 caractères : lettres sans accent, chiffres ou _</p>
+
+          <label for="inscription-mot-de-passe">Mot de passe</label>
+          <input type="password" id="inscription-mot-de-passe" name="mot-de-passe"
+                 required minlength="8" maxlength="64" autocomplete="new-password">
+          <p class="aide">8 à 64 caractères</p>
+
+          <label for="inscription-photo">Photo de profil (facultatif)</label>
+          <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+          <input type="file" id="inscription-photo" name="photo" accept="image/jpeg,image/png,image/webp">
+          <p class="aide">JPEG, PNG ou WebP, 5 Mo maximum</p>
+
+          <p id="message-inscription" class="message-erreur" aria-live="polite"></p>
+          <button type="submit" id="bouton-inscription" class="bouton bouton--principal">Créer mon compte</button>
+        </form>
+      </section>
+
+      <!-- Formulaire de connexion. -->
+      <section class="carte">
+        <h2 class="carte-titre">Se connecter</h2>
+        <!-- SÉCURITÉ : mêmes règles HTML que l'inscription, revérifiées en JavaScript. -->
+        <form id="formulaire-connexion" class="formulaire">
+          <label for="connexion-pseudo">Pseudo</label>
+          <input type="text" id="connexion-pseudo" name="pseudo"
+                 required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username">
+
+          <label for="connexion-mot-de-passe">Mot de passe</label>
+          <input type="password" id="connexion-mot-de-passe" name="mot-de-passe"
+                 required minlength="8" maxlength="64" autocomplete="current-password">
+
+          <p id="message-connexion" class="message-erreur" aria-live="polite"></p>
+          <button type="submit" id="bouton-connexion" class="bouton bouton--principal">Se connecter</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). validation.js et images.js sont ceux de la version 1, réutilisés sans copie.
+    L'ordre compte : chaque fichier utilise les fonctions des fichiers chargés avant lui.
+  -->
+  <script src="../js/validation.js"></script>
+  <script src="../js/images.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/comptes.js"></script>
+</body>
+</html>

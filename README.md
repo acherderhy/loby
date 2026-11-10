@@ -70,11 +70,25 @@ loby/
 ├── assets/README-logo.md   Documentation du kit logo.
 ├── prompts/            Prompts donnés à Claude Code à chaque étape.
 ├── docs/               Fiches d'oral (une par membre) et scénario de démo commun.
+├── v2/                 Version 2 (bonus) avec Supabase.
 ├── cadrage.md          Document de cadrage.
 ├── SECURITE.md         Protections, audit de sécurité et limites.
 ├── CLAUDE.md           Règles du projet (simplicité, documentation, sécurité).
 └── README.md           Ce fichier.
 ```
+
+## Version 2 (bonus) : données partagées avec Supabase
+
+Le dossier [v2/](v2/) contient une seconde version de Loby, branchée sur **Supabase** (base de données hébergée) :
+tous les utilisateurs partagent les mêmes posts, photos et likes. La version principale ci-dessus reste inchangée
+et respecte la consigne « pas de backend ».
+
+- **En ligne :** <https://acherderhy.github.io/loby/v2/>
+- Même interface, mêmes règles de saisie et de photos (`js/validation.js` et `js/images.js` réutilisés sans copie).
+- Toujours aucune librairie : les échanges avec Supabase se font uniquement avec `fetch()`.
+- Les contrôles d'accès sont faits **par le serveur** grâce aux règles RLS ([v2/supabase.sql](v2/supabase.sql)).
+
+Détails : [v2/README.md](v2/README.md) et la section « Version 2 » de [SECURITE.md](SECURITE.md).
 
 ## Équipe
 

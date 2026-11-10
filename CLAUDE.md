@@ -32,8 +32,19 @@ loby/
 ├── assets/README-logo.md
 ├── prompts/            Prompts donnés à Claude Code à chaque étape (+ README.md).
 ├── docs/               Fiches d'oral (oral-membre-1.md à oral-membre-4.md) et scénario de démo (demo.md).
+├── v2/                 BONUS : version 2 branchée sur Supabase (ne pas toucher à la v1 pour la v2).
+│   ├── index.html, fil.html   Mêmes pages, CSP + connect-src vers Supabase, bandeau « Version 2 ».
+│   ├── js/config.js    SUPABASE_URL et clé anon (publique). Jamais la clé service_role.
+│   ├── js/supabase.js  Session (jeton) + fonctions fetch : inscrire, connecter, deconnecter, lire, ajouter, supprimer, modifier.
+│   ├── js/comptes.js   Inscription / connexion via Supabase.
+│   ├── js/fil.js       Fil, publication, suppression, likes, avatar, déconnexion via Supabase.
+│   ├── supabase.sql    Tables, règles RLS, droits, trigger (exécuté une fois dans Supabase).
+│   └── README.md
 ├── CLAUDE.md, cadrage.md, README.md, SECURITE.md, .gitignore
 ```
+
+La v2 réutilise `../css/style.css`, `../assets/`, `../js/validation.js` et `../js/images.js`.
+Ordre de chargement v2 : validation.js → images.js → config.js → supabase.js → comptes.js (ou fil.js).
 
 Ordre de chargement des scripts (en bas du `<body>`, avec `<script src="...">` uniquement) :
 - `index.html` : stockage.js → validation.js → hachage.js → images.js → comptes.js
