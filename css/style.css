@@ -1,60 +1,121 @@
 /*
   Fichier : css/style.css
-  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages, version téléphone).
+  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages, mode sombre, version téléphone).
   Membre  : Membre 3 (interface)
 
   SÉCURITÉ : tous les styles sont dans ce fichier externe. La CSP (style-src 'self') interdit
   les styles inline (attribut style="..." ou balise <style>), qu'un attaquant pourrait injecter
   pour cacher ou maquiller du contenu (faux bouton, faux formulaire).
+  Aucune police ni image externe : tout vient de notre site (img-src 'self'), aucune requête vers un autre site.
 */
 
-/* Couleurs de Loby, définies une seule fois et réutilisées partout avec var(--nom). */
+/* =====================================================================
+   1. Variables : couleurs, ombres, arrondis
+   ===================================================================== */
+
+/* Définies une seule fois et réutilisées partout avec var(--nom).
+   Le mode sombre (section 12) ne fait que redonner d'autres valeurs à ces variables. */
 :root {
-  --couleur-principale: #2F54EB;        /* bleu Loby : boutons, liens */
-  --couleur-principale-foncee: #1D39C4; /* bleu plus foncé : survol des boutons */
-  --couleur-accent: #FF7A45;            /* corail : le point du logo, les likes */
-  --couleur-texte: #0F172A;             /* bleu nuit presque noir : le texte */
-  --couleur-texte-secondaire: #475569;  /* gris : dates, aides */
-  --couleur-bordure: #E2E8F0;           /* gris clair : bordures */
-  --couleur-fond: #FFFFFF;              /* fond blanc */
-  --couleur-fond-doux: #F8FAFC;         /* fond très légèrement gris : derrière les cartes */
-  --couleur-erreur: #B91C1C;            /* rouge : messages d'erreur, bouton Supprimer */
+  color-scheme: light dark;                 /* champs et barres de défilement du navigateur suivent le thème */
+
+  --couleur-principale: #2F54EB;            /* bleu Loby : boutons */
+  --couleur-principale-foncee: #1D39C4;     /* bleu plus foncé : survol des boutons */
+  --couleur-principale-douce: #EEF2FF;      /* bleu très pâle : fonds légers (survol, bouton « Choisir un fichier ») */
+  --couleur-accent: #FF7A45;                /* corail : le point du logo, les likes */
+  --couleur-accent-douce: #FFF1EA;          /* corail très pâle : survol du bouton like */
+  --couleur-texte: #0F172A;                 /* bleu nuit presque noir : le texte */
+  --couleur-texte-secondaire: #475569;      /* gris : dates, aides (contraste 7:1 sur blanc) */
+  --couleur-lien: #2F54EB;                  /* liens et bouton secondaire */
+  --couleur-focus: #2F54EB;                 /* contour du focus clavier */
+  --couleur-bordure: #E2E8F0;               /* gris clair : bordures */
+  --couleur-bordure-forte: #CBD5E1;         /* gris un peu plus marqué : survol des champs */
+  --couleur-fond: #F4F6FB;                  /* fond de page légèrement teinté de bleu */
+  --couleur-surface: #FFFFFF;               /* cartes blanches */
+  --couleur-surface-douce: #F8FAFC;         /* fond des champs de saisie */
+  --couleur-en-tete: rgba(255, 255, 255, 0.82); /* en-tête blanc légèrement transparent */
+  --couleur-erreur: #B91C1C;                /* rouge : messages d'erreur, bouton Supprimer */
+  --couleur-erreur-fond: #FEF2F2;           /* rouge très pâle : fond des messages d'erreur */
+
+  --ombre-carte: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.06);
+  --ombre-survol: 0 2px 4px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10);
+  --anneau-focus-champ: rgba(47, 84, 235, 0.30); /* halo bleu autour du champ actif */
+  --rayon: 16px;                            /* arrondi des cartes */
+  --transition: 180ms ease;                 /* durée des petites animations de survol */
 }
+
+/* =====================================================================
+   2. Base de la page
+   ===================================================================== */
 
 /* Les tailles incluent les marges intérieures et les bordures (plus simple à calculer). */
 * {
   box-sizing: border-box;
 }
 
-/* Base de la page : police système (aucune police externe, donc aucune requête vers un autre site). */
+/* Police système (aucune police externe, donc aucune requête vers un autre site). */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--couleur-texte);
-  background-color: var(--couleur-fond-doux);
+  font-size: 1rem;
   line-height: 1.5;
+  color: var(--couleur-texte);
+  background-color: var(--couleur-fond);
+  -webkit-font-smoothing: antialiased;      /* texte plus net sur Mac */
 }
 
-/* ---------- En-tête ---------- */
+a {
+  color: var(--couleur-lien);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
 
-/* Bandeau du haut avec le logo. */
-.en-tete {
-  padding: 16px;
-  background-color: var(--couleur-fond);
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Contour bien visible pour la navigation au clavier (touche Tab), sur tous les éléments cliquables. */
+a:focus-visible,
+.bouton:focus-visible,
+.bouton-like:focus-visible,
+.bouton-avatar:focus-visible {
+  outline: 2px solid var(--couleur-focus);
+  outline-offset: 3px;
+}
+
+/* =====================================================================
+   3. En-tête collant
+   ===================================================================== */
+
+/* Bandeau du haut avec le logo : il reste collé en haut de l'écran quand on fait défiler la page.
+   Le fond est légèrement transparent et flouté : on devine le contenu qui passe dessous. */
+header.en-tete {
+  --largeur-colonne: 880px;                 /* largeur de la colonne de contenu de la page d'accueil */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  /* Marges gauche/droite calculées pour aligner le logo sur le bord des cartes en dessous :
+     (largeur de l'écran - largeur de la colonne) / 2, et au moins 16 px sur téléphone. */
+  padding: 12px max(16px, calc((100% - var(--largeur-colonne)) / 2 + 16px));
+  background-color: var(--couleur-en-tete);
+  -webkit-backdrop-filter: saturate(180%) blur(12px); /* même règle, pour Safari */
+  backdrop-filter: saturate(180%) blur(12px);
   border-bottom: 1px solid var(--couleur-bordure);
 }
 
 /* Le logo (enfant direct de l'en-tête, pas l'avatar) garde ses proportions. */
-.en-tete > img {
+header.en-tete > img {
   display: block;
   width: auto;
+  height: 36px;
 }
 
-/* Sur le fil : logo à gauche, utilisateur à droite (et passage à la ligne si l'écran est étroit). */
+/* Sur le fil : logo à gauche, utilisateur à droite, alignés sur la colonne du fil (600 px). */
 .en-tete--fil {
-  display: flex;
+  --largeur-colonne: 600px;
   flex-wrap: wrap;
-  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
@@ -62,32 +123,54 @@ body {
 .utilisateur {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .utilisateur-pseudo {
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
-/* ---------- Avatars ---------- */
+/* =====================================================================
+   4. Bandeau « Version 2 » (pages v2 uniquement : <p class="en-tete aide">)
+   ===================================================================== */
 
-/* Photo de profil : petit rond de 40 px. object-fit: cover remplit le rond sans déformer l'image. */
-.avatar {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
+/* Fine bande d'information tout en haut, discrète mais lisible. Elle ne colle pas (seul le <header> colle). */
+p.en-tete {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--couleur-texte-secondaire);
+  background-color: var(--couleur-surface);
+  border-bottom: 1px solid var(--couleur-bordure);
 }
 
-/* Avatar par défaut (pas de photo) : rond bleu avec l'initiale du pseudo en blanc, centrée. */
+/* =====================================================================
+   5. Avatars
+   ===================================================================== */
+
+/* Photo de profil ronde. object-fit: cover remplit le rond sans déformer l'image.
+   Le box-shadow à 2 couches dessine un léger anneau : un fin liseré blanc puis un cercle bleu pâle. */
+.avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--couleur-surface), 0 0 0 4px var(--couleur-principale-douce);
+  transition: box-shadow var(--transition);
+}
+
+/* Avatar par défaut (pas de photo) : rond bleu dégradé avec l'initiale du pseudo en blanc, centrée. */
 .avatar--initiale {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 1rem;
   font-weight: 700;
   color: #FFFFFF;
-  background-color: var(--couleur-principale);
+  background: linear-gradient(135deg, var(--couleur-principale), #1D39C4);
 }
 
 /* Bouton invisible autour de l'avatar du haut (clic = changer sa photo de profil). */
@@ -100,43 +183,77 @@ body {
   cursor: pointer;
 }
 
-.bouton-avatar:hover {
-  outline: 2px solid var(--couleur-accent);
-  outline-offset: 2px;
+/* Avatar du haut un peu plus petit. */
+.bouton-avatar .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
 }
 
-/* ---------- Mise en page ---------- */
+/* Au survol, l'anneau devient corail : on comprend que l'avatar est cliquable. */
+.bouton-avatar:hover .avatar {
+  box-shadow: 0 0 0 2px var(--couleur-surface), 0 0 0 4px var(--couleur-accent);
+}
+
+/* =====================================================================
+   6. Mise en page et page d'accueil
+   ===================================================================== */
 
 /* Zone de contenu centrée, limitée en largeur pour rester lisible. */
 .contenu {
   max-width: 600px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px 16px 64px;
 }
 
-/* La page d'accueil est un peu plus large, pour mettre les 2 formulaires côte à côte. */
+/* La page d'accueil est plus large, pour mettre les 2 formulaires côte à côte. */
 .contenu--accueil {
   max-width: 880px;
 }
 
+/* Grand titre accrocheur. clamp() : taille fluide, entre 1,9rem (téléphone) et 2,9rem (ordinateur). */
 .accroche {
-  margin: 8px 0 24px;
-  font-size: 1.5rem;
+  max-width: 16em;
+  margin: 32px auto 40px;
+  font-size: clamp(1.9rem, 5vw, 2.9rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
   text-align: center;
+  text-wrap: balance;                       /* répartit le titre équitablement sur les lignes */
+}
+
+/* Petit trait corail décoratif sous le titre (rappel du point du logo). */
+.accroche::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: 20px auto 0;
+  border-radius: 999px;
+  background-color: var(--couleur-accent);
 }
 
 /* Sur téléphone : les 2 formulaires l'un sous l'autre. */
 .grille-formulaires {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  align-items: start;                       /* chaque carte garde sa propre hauteur */
+  gap: 20px;
 }
 
 /* Sur un écran d'au moins 720 px : les 2 formulaires côte à côte. */
 @media (min-width: 720px) {
   .grille-formulaires {
     grid-template-columns: 1fr 1fr;
+    gap: 24px;
   }
+}
+
+/* Lien « Essayer la version partagée (v2) » sous les formulaires, centré. */
+.contenu--accueil > .aide {
+  margin-top: 28px;
+  text-align: center;
 }
 
 /* Titre présent pour les lecteurs d'écran, mais caché à l'écran. */
@@ -149,25 +266,33 @@ body {
   white-space: nowrap;
 }
 
+/* Titre « Fil » au-dessus des posts. */
 .titre-section {
-  margin: 24px 0 8px;
+  margin: 36px 0 14px;
   font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-/* Bloc blanc à bords arrondis (formulaires). */
+/* Carte blanche arrondie avec une ombre douce (formulaires). */
 .carte {
-  padding: 20px;
-  background-color: var(--couleur-fond);
+  padding: 24px;
+  background-color: var(--couleur-surface);
   border: 1px solid var(--couleur-bordure);
-  border-radius: 12px;
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre-carte);
 }
 
 .carte-titre {
-  margin: 0 0 16px;
-  font-size: 1.25rem;
+  margin: 0 0 18px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-/* ---------- Formulaires ---------- */
+/* =====================================================================
+   7. Formulaires
+   ===================================================================== */
 
 .formulaire {
   display: flex;
@@ -175,61 +300,95 @@ body {
 }
 
 .formulaire label {
-  margin-top: 8px;
+  margin-top: 14px;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
+/* Le tout premier libellé n'a pas besoin d'espace au-dessus. */
+.formulaire label:first-child {
+  margin-top: 0;
+}
+
+/* Champs larges et confortables. 1rem (16 px) minimum : évite le zoom automatique sur iPhone. */
 .formulaire input,
 .formulaire textarea {
   width: 100%;
-  margin-top: 4px;
-  padding: 10px 12px;
+  margin-top: 6px;
+  padding: 12px 14px;
   font: inherit;
+  font-size: 1rem;
   color: var(--couleur-texte);
+  background-color: var(--couleur-surface-douce);
   border: 1px solid var(--couleur-bordure);
-  border-radius: 8px;
+  border-radius: 12px;
+  transition: border-color var(--transition), outline-color var(--transition), background-color var(--transition);
+}
+
+.formulaire input:hover,
+.formulaire textarea:hover {
+  border-color: var(--couleur-bordure-forte);
+}
+
+/* Champ actif : bordure bleue et halo bleu bien visibles (utile au clavier). */
+.formulaire input:focus,
+.formulaire textarea:focus {
+  border-color: var(--couleur-principale);
+  outline: 3px solid var(--anneau-focus-champ);
+  outline-offset: 0;
+  background-color: var(--couleur-surface);
 }
 
 .formulaire textarea {
+  min-height: 96px;
   resize: vertical;
 }
 
-/* Champ de choix de fichier (photos) : un peu moins haut que les champs texte. */
+/* Champ de choix de fichier (photos). */
 .formulaire input[type="file"] {
   padding: 8px;
-  background-color: var(--couleur-fond-doux);
+  font-size: 0.9rem;
+  color: var(--couleur-texte-secondaire);
+  cursor: pointer;
+}
+
+/* Le bouton « Choisir un fichier » du navigateur, redessiné en pilule bleu pâle. */
+.formulaire input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--couleur-lien);
+  background-color: var(--couleur-principale-douce);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
 }
 
 /* Aperçu de la photo avant publication (caché par l'attribut hidden tant qu'aucune photo n'est choisie).
    Volontairement aucune règle « display » ici : elle écraserait l'attribut hidden. */
 .apercu {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .apercu-image {
   display: block;
   max-width: 100%;
-  max-height: 240px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-}
-
-/* Contour bien visible sur le champ actif (utile au clavier). */
-.formulaire input:focus,
-.formulaire textarea:focus {
-  outline: 2px solid var(--couleur-principale);
-  outline-offset: 1px;
+  max-height: 280px;
+  margin-bottom: 10px;
+  border-radius: 12px;
 }
 
 /* Petite aide sous un champ (règles du pseudo et du mot de passe). */
 .aide {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
+  margin: 6px 0 0;
+  font-size: 0.8rem;
   color: var(--couleur-texte-secondaire);
 }
 
-.formulaire button[type="submit"] {
-  margin-top: 16px;
+/* Bouton d'envoi des formulaires de la page d'accueil (enfant direct du formulaire : prend toute la largeur). */
+.formulaire > button[type="submit"] {
+  margin-top: 22px;
 }
 
 /* Ligne sous la zone de texte : compteur à gauche, bouton Publier à droite. */
@@ -238,12 +397,13 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 12px;
 }
 
 .compteur {
-  margin-top: 16px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--couleur-texte-secondaire);
+  font-variant-numeric: tabular-nums;       /* chiffres de même largeur : le compteur ne « saute » pas */
 }
 
 /* Classe ajoutée en JS quand il reste moins de 20 caractères. */
@@ -252,11 +412,19 @@ body {
   font-weight: 600;
 }
 
-/* Message d'erreur : caché tant qu'il est vide (le JS écrit le texte avec textContent). */
+/* =====================================================================
+   8. Messages
+   ===================================================================== */
+
+/* Message d'erreur dans un encadré rouge pâle : caché tant qu'il est vide (le JS écrit le texte avec textContent). */
 .message-erreur {
-  margin: 12px 0 0;
-  color: var(--couleur-erreur);
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  font-size: 0.9rem;
   font-weight: 600;
+  color: var(--couleur-erreur);
+  background-color: var(--couleur-erreur-fond);
+  border-radius: 12px;
 }
 
 .message-erreur:empty {
@@ -265,25 +433,42 @@ body {
 
 /* Message tout en haut de la page (erreurs de photo de profil). */
 .message-erreur--haut {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
 
-/* ---------- Boutons ---------- */
+/* Fil vide : carte en pointillés. */
+.fil-vide {
+  margin: 0;
+  padding: 40px 16px;
+  color: var(--couleur-texte-secondaire);
+  text-align: center;
+  border: 2px dashed var(--couleur-bordure-forte);
+  border-radius: var(--rayon);
+}
+
+/* =====================================================================
+   9. Boutons (forme « pilule »)
+   ===================================================================== */
 
 .bouton {
-  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
   font: inherit;
+  font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 8px;
   border: 1px solid transparent;
+  border-radius: 999px;
   cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+              color var(--transition), transform var(--transition);
 }
 
-.bouton:focus-visible,
-.bouton-like:focus-visible,
-.bouton-avatar:focus-visible {
-  outline: 2px solid var(--couleur-principale);
-  outline-offset: 2px;
+/* Effet « enfoncé » au clic. */
+.bouton:active:not(:disabled),
+.bouton-like:active {
+  transform: scale(0.97);
 }
 
 /* Bouton grisé pendant le hachage du mot de passe (attribut disabled). */
@@ -295,89 +480,125 @@ body {
 .bouton--principal {
   color: #FFFFFF;
   background-color: var(--couleur-principale);
+  box-shadow: 0 4px 12px rgba(47, 84, 235, 0.25);
 }
 
-.bouton--principal:hover {
+.bouton--principal:hover:not(:disabled) {
   background-color: var(--couleur-principale-foncee);
 }
 
+/* « Se déconnecter » : pilule claire avec bordure. */
 .bouton--secondaire {
-  color: var(--couleur-principale);
-  background-color: var(--couleur-fond);
-  border-color: var(--couleur-principale);
+  color: var(--couleur-lien);
+  background-color: var(--couleur-surface);
+  border-color: var(--couleur-bordure-forte);
 }
 
+.bouton--secondaire:hover {
+  background-color: var(--couleur-principale-douce);
+  border-color: var(--couleur-lien);
+}
+
+/* « Supprimer », « Oui », « Retirer la photo » : texte rouge, discret jusqu'au survol. */
 .bouton--danger {
-  padding: 6px 12px;
-  font-size: 0.9rem;
+  padding: 6px 14px;
+  font-size: 0.875rem;
   color: var(--couleur-erreur);
-  background-color: var(--couleur-fond);
+  background-color: transparent;
   border-color: var(--couleur-bordure);
 }
 
 .bouton--danger:hover {
+  background-color: var(--couleur-erreur-fond);
   border-color: var(--couleur-erreur);
 }
 
 /* Petit bouton neutre (« Annuler » de la confirmation de suppression). */
 .bouton--petit {
-  padding: 6px 12px;
-  font-size: 0.9rem;
+  padding: 6px 14px;
+  font-size: 0.875rem;
   color: var(--couleur-texte);
-  background-color: var(--couleur-fond);
+  background-color: transparent;
   border-color: var(--couleur-bordure);
 }
 
 .bouton--petit:hover {
-  border-color: var(--couleur-texte);
+  background-color: var(--couleur-surface-douce);
+  border-color: var(--couleur-bordure-forte);
 }
 
-/* ---------- Posts ---------- */
+/* =====================================================================
+   10. Posts (fil façon Instagram / Twitter)
+   ===================================================================== */
 
 .post {
-  margin-bottom: 12px;
-  padding: 16px;
-  background-color: var(--couleur-fond);
+  margin-bottom: 16px;
+  padding: 18px 20px 14px;
+  background-color: var(--couleur-surface);
   border: 1px solid var(--couleur-bordure);
-  border-radius: 12px;
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre-carte);
+  transition: box-shadow var(--transition);
 }
 
-/* Avatar, pseudo et date sur la même ligne (passage à la ligne sur petit écran). */
+/* Légère élévation au survol. */
+.post:hover {
+  box-shadow: var(--ombre-survol);
+}
+
+/* En-tête du post en grille : l'avatar à gauche sur 2 lignes, le pseudo au-dessus de la date. */
 .post-en-tete {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
   align-items: center;
-  gap: 8px;
+  line-height: 1.3;
 }
 
+.post-en-tete .avatar {
+  grid-row: 1 / span 2;
+}
+
+.post-en-tete strong {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* Date discrète. */
 .post-en-tete time {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--couleur-texte-secondaire);
 }
 
 /* pre-wrap garde les retours à la ligne du post ; anywhere coupe les mots très longs (pas de débordement). */
 .post-texte {
-  margin: 8px 0 12px;
+  margin: 14px 0 4px;
+  line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* Photo d'un post (affichée avant le texte) : jamais plus large que la carte, coins arrondis. */
+/* Photo d'un post (affichée avant le texte) : toute la largeur de la carte, coins arrondis. */
 .post-image {
   display: block;
-  max-width: 100%;
+  width: 100%;
   height: auto;
-  margin: 12px 0;
-  border-radius: 8px;
+  margin: 14px 0 0;
+  border-radius: 12px;
+  background-color: var(--couleur-surface-douce);
 }
 
-/* flex-wrap : sur téléphone, la confirmation de suppression passe à la ligne au lieu de déborder. */
+/* Barre d'actions séparée par un fin trait.
+   flex-wrap : sur téléphone, la confirmation de suppression passe à la ligne au lieu de déborder. */
 .post-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--couleur-bordure);
 }
 
 /* « Supprimer ce post ? » suivi des boutons Oui et Annuler. */
@@ -386,32 +607,121 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
+/* Bouton like « ♥ 3 » : pilule discrète. */
 .bouton-like {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
   font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--couleur-texte-secondaire);
-  background-color: var(--couleur-fond);
+  background-color: transparent;
   border: 1px solid var(--couleur-bordure);
   border-radius: 999px;
   cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition),
+              color var(--transition), transform var(--transition);
 }
 
 .bouton-like:hover {
+  color: var(--couleur-texte);
+  background-color: var(--couleur-accent-douce);
   border-color: var(--couleur-accent);
 }
 
-/* Classe ajoutée en JS quand l'utilisateur a liké le post : fond corail, texte foncé (bien lisible). */
-.bouton-like--actif {
-  color: var(--couleur-texte);
+/* Classe ajoutée en JS quand l'utilisateur a liké le post : fond corail.
+   Texte bleu nuit fixe (pas la variable) : il reste foncé en mode sombre, contraste 7:1 sur le corail. */
+.bouton-like--actif,
+.bouton-like--actif:hover {
+  color: #0F172A;
   background-color: var(--couleur-accent);
   border-color: var(--couleur-accent);
 }
 
-.fil-vide {
-  color: var(--couleur-texte-secondaire);
-  text-align: center;
+/* =====================================================================
+   11. Téléphone (écrans de 480 px ou moins)
+   ===================================================================== */
+
+@media (max-width: 480px) {
+  /* Sur le fil, logo réduit au symbole seul (le carré du kit logo) pour laisser la place à l'utilisateur. */
+  header.en-tete--fil > img {
+    content: url("../assets/logo/loby-symbole-bleu.svg");
+    height: 34px;
+  }
+
+  .bouton--secondaire {
+    padding: 8px 14px;
+    font-size: 0.875rem;
+  }
+
+  .carte {
+    padding: 20px;
+  }
+
+  .post {
+    padding: 16px 16px 12px;
+  }
+
+  .accroche {
+    margin: 16px auto 28px;
+  }
+}
+
+/* =====================================================================
+   12. Mode sombre automatique (suit le réglage du système)
+   ===================================================================== */
+
+/* On redonne simplement d'autres valeurs aux variables : tout le site suit.
+   Contrastes vérifiés : texte 14:1, texte secondaire 6,9:1, liens 7:1 sur les cartes (minimum demandé : 4,5:1). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --couleur-principale-douce: rgba(141, 162, 255, 0.14);
+    --couleur-accent-douce: rgba(255, 122, 69, 0.14);
+    --couleur-texte: #E2E8F0;
+    --couleur-texte-secondaire: #94A3B8;
+    --couleur-lien: #8DA2FF;
+    --couleur-focus: #8DA2FF;
+    --couleur-bordure: #1E293B;
+    --couleur-bordure-forte: #334155;
+    --couleur-fond: #0B1120;
+    --couleur-surface: #111827;
+    --couleur-surface-douce: #0F172A;
+    --couleur-en-tete: rgba(11, 17, 32, 0.82);
+    --couleur-erreur: #FCA5A5;
+    --couleur-erreur-fond: rgba(248, 113, 113, 0.12);
+
+    --ombre-carte: 0 1px 2px rgba(0, 0, 0, 0.40), 0 4px 16px rgba(0, 0, 0, 0.25);
+    --ombre-survol: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 28px rgba(0, 0, 0, 0.35);
+    --anneau-focus-champ: rgba(141, 162, 255, 0.40);
+  }
+
+  /* Le nom « Loby » du logo bleu est écrit en bleu nuit : invisible sur fond sombre.
+     On affiche à la place la variante blanche du kit logo (chemin relatif à ce fichier CSS). */
+  header.en-tete > img {
+    content: url("../assets/logo/loby-horizontal-blanc.svg");
+  }
+}
+
+/* Fil sur téléphone en mode sombre : on garde le symbole bleu (lisible sur les deux fonds).
+   Répété ici car la règle du mode sombre ci-dessus est écrite après celle du téléphone. */
+@media (prefers-color-scheme: dark) and (max-width: 480px) {
+  header.en-tete--fil > img {
+    content: url("../assets/logo/loby-symbole-bleu.svg");
+  }
+}
+
+/* =====================================================================
+   13. Accessibilité : moins d'animations si l'utilisateur l'a demandé
+   ===================================================================== */
+
+/* Réglage du système « réduire les animations » : on coupe toutes les transitions. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
