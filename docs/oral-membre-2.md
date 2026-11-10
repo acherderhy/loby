@@ -1,6 +1,6 @@
 # Fiche d'oral — Nathan : posts, autorisation et sécurité des photos
 
-Fichiers : `js/posts.js`, `js/images.js`.
+Fichiers : `js/posts.js`, `js/images.js`, `js/publier.js` et `publier.html` (page de publication, ouverte par le bouton « + »).
 
 ## Ma partie en une phrase
 
@@ -68,12 +68,12 @@ Préparation : site lancé en local, F12 ouvert, deux fichiers prêts sur le bur
 - `photo.png` : une vraie image PNG ;
 - `faux.jpg` : un fichier texte (créé avec un éditeur de texte, contenant par exemple `ceci n'est pas une image`) renommé en `.jpg`.
 
-1. **Fichier déguisé** : connecté avec `demo_a`, dans « Photo (facultatif) », choisir `faux.jpg`
+1. **Fichier déguisé** : connecté avec `demo_a`, cliquer le bouton rond « + » (page Publier), puis dans « Photo (facultatif) », choisir `faux.jpg`
    → « Ce fichier n'est pas une vraie image JPEG, PNG ou WebP. ». Le navigateur l'avait pourtant pris pour un JPEG (extension) : c'est la signature qui l'a démasqué.
-2. **Vraie photo** : choisir `photo.png` → l'aperçu s'affiche avec le bouton « Retirer la photo ». Cliquer « Publier ».
+2. **Vraie photo** : choisir `photo.png` → l'aperçu s'affiche avec le bouton « Retirer la photo ». Cliquer « Publier » → retour au fil, le post est en haut.
 3. **Ré-encodage** : F12 → **Application** → **Local storage** → `loby_posts` : le champ `image` commence par
    `data:image/jpeg;base64,` alors qu'on a envoyé un **PNG** → preuve que l'image a été redessinée.
-4. **Autorisation** : se déconnecter, créer le compte `demo_b`. Dans l'onglet **Console**, taper :
+4. **Autorisation** : se déconnecter (onglet **Profil** → « Se déconnecter »), créer le compte `demo_b`. Sur le fil, dans l'onglet **Console**, taper :
    ```js
    lirePosts()
    ```

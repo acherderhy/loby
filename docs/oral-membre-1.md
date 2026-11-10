@@ -1,6 +1,6 @@
 # Fiche d'oral — Liora : comptes et hachage des mots de passe
 
-Fichiers : `js/hachage.js`, `js/comptes.js` (et la partie formulaires de `index.html`).
+Fichiers : `js/hachage.js`, `js/comptes.js` (et la partie formulaires de `index.html`), `js/profil.js` et `profil.html` (page Profil : photo, chiffres, mes posts, déconnexion).
 
 ## Ma partie en une phrase
 
@@ -70,7 +70,7 @@ Préparation : site lancé avec `python3 -m http.server 8000`, Chrome ouvert sur
 2. **Mot de passe haché** : F12 → onglet **Application** → **Local storage** → `http://localhost:8000` → clé `loby_utilisateurs`.
    Montrer les champs `sel` et `hachage` (64 caractères hexadécimaux) : il n'y a **aucun champ mot de passe**.
 3. **Session** : même onglet → **Session storage** → clé `loby_session` : il n'y a qu'un identifiant.
-4. **Message générique** : cliquer « Se déconnecter ». Dans « Se connecter », taper `demo_a` / `mauvais-mdp` → « Identifiants incorrects ».
+4. **Message générique** : onglet **Profil** (menu), puis « Se déconnecter ». Dans « Se connecter », taper `demo_a` / `mauvais-mdp` → « Identifiants incorrects ».
    Puis taper `pseudo_inconnu` / `mauvais-mdp` → **exactement le même message**.
 5. **Blocage** : refaire 3 essais ratés (5 au total) → « Trop de tentatives. Réessayez dans 30 secondes. ».
    Taper ensuite le bon mot de passe : la connexion reste refusée tant que les 30 secondes ne sont pas passées.

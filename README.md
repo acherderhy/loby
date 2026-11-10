@@ -24,14 +24,18 @@ protection contre le XSS, Content-Security-Policy, validation des saisies, contr
 1. **Comptes**
    - Créer un compte avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 à 64 caractères).
    - Se connecter, se déconnecter.
-   - Ajouter une photo de profil (facultative) à l'inscription, ou la changer depuis le fil en cliquant sur son avatar.
+   - Ajouter une photo de profil (facultative) à l'inscription, ou la changer depuis la page **Profil**.
      Sans photo, l'avatar affiche l'initiale du pseudo.
+   - Page **Profil** : son avatar, son pseudo, son nombre de posts et de likes reçus, la liste de ses posts, et « Se déconnecter ».
 2. **Posts**
-   - Publier une photo, un texte (280 caractères maximum) ou les deux.
+   - Publier une photo, un texte (280 caractères maximum) ou les deux, depuis la page **Publier** (bouton rond « + »).
    - Supprimer **ses propres** posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler).
 3. **Fil d'actualité**
    - Voir les posts de tous les comptes, **les plus récents en haut**.
    - Liker un post, ou retirer son like.
+
+Navigation : un menu **Fil / Profil** (dans l'en-tête sur ordinateur, en barre d'onglets en bas de l'écran sur téléphone)
+et un bouton rond « + » toujours visible pour publier.
 
 > Comme il n'y a pas de serveur, « tous les comptes » signifie « tous les comptes créés dans ce navigateur ».
 
@@ -56,6 +60,8 @@ Puis ouvrir <http://localhost:8000/> dans le navigateur.
 loby/
 ├── index.html          Page de connexion / inscription.
 ├── fil.html            Page du fil d'actualité.
+├── publier.html        Page de publication d'un post.
+├── profil.html         Page Profil (photo, chiffres, mes posts, déconnexion).
 ├── css/style.css       Feuille de style unique.
 ├── js/
 │   ├── stockage.js     Lecture/écriture localStorage et session.
@@ -63,8 +69,11 @@ loby/
 │   ├── validation.js   Vérification des saisies.
 │   ├── comptes.js      Inscription, connexion, limitation des tentatives.
 │   ├── images.js       Vérification et redessin des photos (profil, posts).
-│   ├── posts.js        Publication et suppression des posts.
-│   └── fil.js          Affichage du fil, likes, confirmation de suppression, photos, déconnexion.
+│   ├── posts.js        Publication et suppression des posts (contrôle d'autorisation).
+│   ├── cartes.js       Session des pages connectées, cartes de posts, likes, confirmation de suppression.
+│   ├── fil.js          Page du fil : tous les posts, les plus récents en haut.
+│   ├── publier.js      Page Publier : formulaire, aperçu de la photo, compteur.
+│   └── profil.js       Page Profil : photo de profil, chiffres, mes posts, déconnexion.
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons et site.webmanifest.
 ├── assets/README-logo.md   Documentation du kit logo.
@@ -94,9 +103,9 @@ Détails : [v2/README.md](v2/README.md) et la section « Version 2 » de [SECURI
 
 | Membre | Responsabilité | Fichiers |
 |---|---|---|
-| **Membre 1** | Comptes et hachage des mots de passe | `js/hachage.js`, `js/comptes.js` |
-| **Membre 2** | Posts, contrôle d'autorisation et sécurité des photos | `js/posts.js`, `js/images.js` |
-| **Membre 3** | Fil d'actualité, likes, interface et anti-XSS | `js/fil.js`, `css/style.css`, `fil.html` |
+| **Membre 1** | Comptes, hachage des mots de passe et page Profil | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
+| **Membre 2** | Posts, page Publier, contrôle d'autorisation et sécurité des photos | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
+| **Membre 3** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
 | **Membre 4** | CSP, validation des saisies, documentation | `js/validation.js`, `index.html`, `README.md`, `cadrage.md`, `SECURITE.md` |
 
 Le fichier `js/stockage.js` est commun aux 4 membres.

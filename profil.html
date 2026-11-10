@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!--
+  Fichier : profil.html
+  Rôle    : page Profil de Loby (réservée aux utilisateurs connectés) : avatar et pseudo, changement de photo
+            de profil, nombre de posts et de likes reçus, liste de mes posts uniquement, déconnexion.
+  Membre  : Membre 1 (comptes)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP). Liste blanche de ce que la page a le droit de charger.
+    Si un attaquant réussit à injecter du code dans la page (attaque XSS), le navigateur refusera de l'exécuter.
+    - default-src 'self' : par défaut, uniquement des fichiers venant de notre propre site.
+    - script-src 'self' : scripts seulement depuis nos fichiers .js (aucun <script> inline, aucun onclick, pas d'eval).
+    - style-src 'self'  : styles seulement depuis css/style.css (aucun attribut style="..." ni <style>).
+    - img-src 'self' data: : images depuis notre site, ou écrites directement dans la page sous forme de
+      « data URL » (texte "data:image/jpeg;base64,..."). C'est nécessaire car les photos (profil et posts)
+      sont gardées dans le localStorage sous cette forme. C'est sans danger : data: n'est autorisé QUE pour
+      les images, pas pour les scripts (script-src reste 'self'), une image affichée dans <img> ne peut pas
+      exécuter de JavaScript, et images.js n'affiche que des JPEG redessinés par notre canvas.
+      Aucune adresse externe n'est autorisée : pas d'image piégée chargée depuis un autre site.
+    - object-src 'none' : aucun plugin (<object>, <embed>), souvent utilisés pour exécuter du code.
+    - base-uri 'self'   : empêche d'injecter une balise <base> qui détournerait tous nos chemins relatifs.
+    - form-action 'self': les formulaires ne peuvent envoyer leurs données que vers notre site (pas de vol de données).
+    Placée juste après charset pour s'appliquer avant le chargement de toute autre ressource.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby — Mon profil</title>
+
+  <!-- Icônes du site (chemins RELATIFS : le site est publié dans un sous-dossier sur GitHub Pages). -->
+  <!-- Icône de l'onglet en SVG : nette à toutes les tailles (navigateurs récents). -->
+  <link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+  <!-- Solution de secours pour les navigateurs qui ne lisent pas le SVG. -->
+  <link rel="icon" href="assets/favicon/favicon.ico" sizes="48x48">
+  <!-- Icône quand on ajoute le site à l'écran d'accueil d'un iPhone. -->
+  <link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+  <!-- Fiche d'identité du site (nom + icônes Android). -->
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
+  <!-- Couleur de la barre du navigateur sur mobile (couleur principale de Loby). -->
+  <meta name="theme-color" content="#2F54EB">
+
+  <!-- Feuille de style externe (les styles inline sont interdits par la CSP). -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- En-tête : logo, menu (Fil, Profil) et avatar qui mène au profil. Identique sur les 3 pages connectées. -->
+  <header class="en-tete en-tete--connecte">
+    <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+    <!--
+      Menu principal : dans l'en-tête sur ordinateur, barre d'onglets en bas de l'écran sur téléphone (style.css).
+      aria-current="page" marque l'onglet de la page ouverte (lecteurs d'écran + style). Les icônes SVG sont
+      décoratives (aria-hidden) : le libellé écrit à côté suffit.
+    -->
+    <nav class="navigation" aria-label="Navigation principale">
+      <a href="fil.html" class="navigation-lien">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>Fil</span>
+      </a>
+      <a href="profil.html" class="navigation-lien" aria-current="page">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21a8 8 0 0 1 16 0"/>
+        </svg>
+        <span>Profil</span>
+      </a>
+    </nav>
+    <!-- Avatar de l'utilisateur connecté (rempli en JS par cartes.js) : lien vers son profil. -->
+    <a href="profil.html" id="lien-avatar" class="bouton-avatar" aria-label="Mon profil"></a>
+  </header>
+
+  <main class="contenu contenu--connecte">
+    <!-- Carte du profil : avatar, pseudo, chiffres et boutons (remplis en JS par profil.js, avec textContent). -->
+    <section class="carte profil">
+      <div id="profil-avatar" class="profil-avatar"></div>
+      <h1 id="profil-pseudo" class="profil-pseudo"></h1>
+      <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+      <input type="file" id="champ-avatar" accept="image/jpeg,image/png,image/webp" hidden>
+      <button type="button" id="bouton-avatar" class="bouton bouton--secondaire">Changer ma photo</button>
+      <!-- Erreurs liées au changement de photo de profil (fichier refusé, stockage plein). -->
+      <p id="message-avatar" class="message-erreur" aria-live="polite"></p>
+
+      <div class="profil-chiffres">
+        <p class="profil-chiffre"><strong id="nombre-posts">0</strong> <span>Posts</span></p>
+        <p class="profil-chiffre"><strong id="nombre-likes">0</strong> <span>Likes reçus</span></p>
+      </div>
+
+      <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
+    </section>
+
+    <!-- Mes posts : construits en JS avec createElement + textContent (jamais innerHTML), comme dans le fil. -->
+    <section aria-labelledby="titre-mes-posts">
+      <h2 id="titre-mes-posts" class="titre-section">Mes posts</h2>
+      <!-- Erreurs liées aux likes et aux suppressions (cartes.js). -->
+      <p id="message-posts" class="message-erreur message-erreur--haut" aria-live="polite"></p>
+      <div id="liste-posts"></div>
+    </section>
+  </main>
+
+  <!-- Bouton rond « + » toujours visible : c'est un simple lien vers la page de publication. -->
+  <a href="publier.html" class="bouton-flottant" aria-label="Publier un post">
+    <svg class="icone" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </a>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). Placés en fin de page pour que les éléments existent déjà.
+    profil.js vérifie la session dès son chargement (verifierConnexion, cartes.js) et redirige vers index.html
+    si personne n'est connecté.
+  -->
+  <script src="js/stockage.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/images.js"></script>
+  <script src="js/posts.js"></script>
+  <script src="js/cartes.js"></script>
+  <script src="js/profil.js"></script>
+</body>
+</html>

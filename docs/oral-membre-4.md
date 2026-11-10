@@ -1,10 +1,10 @@
 # Fiche d'oral — EDEN : CSP, validation des saisies et documentation
 
-Fichiers : `js/validation.js`, en-têtes de sécurité de `index.html` et `fil.html`, `README.md`, `cadrage.md`, `SECURITE.md`.
+Fichiers : `js/validation.js`, en-têtes de sécurité de `index.html`, `fil.html`, `publier.html` et `profil.html`, `README.md`, `cadrage.md`, `SECURITE.md`.
 
 ## Ma partie en une phrase
 
-Je pose les barrières communes aux deux pages, la Content-Security-Policy et la validation des saisies en HTML
+Je pose les barrières communes à toutes les pages, la Content-Security-Policy et la validation des saisies en HTML
 puis en JavaScript, et je documente le projet, ses protections et ses limites.
 
 ## Ce que je dis
@@ -19,7 +19,7 @@ puis en JavaScript, et je documente le projet, ses protections et ses limites.
 
 ## Le code à montrer
 
-### 1. `index.html` — la balise CSP (l. 30-31, commentaire l. 13-29 ; identique dans `fil.html` l. 31-32)
+### 1. `index.html` — la balise CSP (l. 30-31, commentaire l. 13-29 ; identique dans `fil.html`, `publier.html` et `profil.html`, l. 30-31)
 
 ```html
 <meta http-equiv="Content-Security-Policy"
@@ -71,7 +71,7 @@ Préparation : site lancé en local sur la page de connexion, F12 ouvert.
    Content Security Policy directive: "script-src 'self'" ». C'est la CSP qui a bloqué le code injecté.
 2. **Aucune ressource externe** : onglet **Network**, recharger la page (F5) → toutes les requêtes viennent de `localhost`.
 3. **Validation HTML** : dans « Créer un compte », taper le pseudo `ab` → le navigateur bloque l'envoi (3 caractères minimum).
-4. **Validation JS** : connecté sur le fil, dans l'onglet **Console**, taper :
+4. **Validation JS** : connecté, cliquer le bouton rond « + » pour ouvrir la page Publier, puis dans l'onglet **Console**, taper :
    ```js
    document.getElementById("texte-post").value = "a".repeat(300)
    ```

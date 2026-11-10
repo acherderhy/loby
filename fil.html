@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <!--
   Fichier : fil.html
-  Rôle    : page du fil d'actualité de Loby (réservée aux utilisateurs connectés) : avatar modifiable,
-            formulaire de publication (avec photo facultative) et liste des posts de tous les comptes,
-            du plus récent au plus ancien.
+  Rôle    : page du fil d'actualité de Loby (réservée aux utilisateurs connectés) : posts de tous les comptes,
+            du plus récent au plus ancien, menu de navigation et bouton « + » pour publier.
   Membre  : Membre 3 (fil d'actualité et interface)
 -->
 <html lang="fr">
@@ -55,73 +54,63 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="en-tete en-tete--fil">
+  <!-- En-tête : logo, menu (Fil, Profil) et avatar qui mène au profil. Identique sur les 3 pages connectées. -->
+  <header class="en-tete en-tete--connecte">
     <img src="assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
-    <div class="utilisateur">
-      <!-- Avatar de l'utilisateur connecté (rempli en JS) : un clic ouvre le choix d'une nouvelle photo de profil. -->
-      <button type="button" id="bouton-avatar" class="bouton-avatar" aria-label="Changer ma photo de profil"
-              title="Changer ma photo de profil"></button>
-      <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
-      <input type="file" id="champ-avatar" accept="image/jpeg,image/png,image/webp" hidden>
-      <!-- Pseudo de l'utilisateur connecté, écrit en JS avec textContent (fil.js). -->
-      <span id="pseudo-connecte" class="utilisateur-pseudo"></span>
-      <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
-    </div>
+    <!--
+      Menu principal : dans l'en-tête sur ordinateur, barre d'onglets en bas de l'écran sur téléphone (style.css).
+      aria-current="page" marque l'onglet de la page ouverte (lecteurs d'écran + style). Les icônes SVG sont
+      décoratives (aria-hidden) : le libellé écrit à côté suffit.
+    -->
+    <nav class="navigation" aria-label="Navigation principale">
+      <a href="fil.html" class="navigation-lien" aria-current="page">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>Fil</span>
+      </a>
+      <a href="profil.html" class="navigation-lien">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21a8 8 0 0 1 16 0"/>
+        </svg>
+        <span>Profil</span>
+      </a>
+    </nav>
+    <!-- Avatar de l'utilisateur connecté (rempli en JS par cartes.js) : lien vers son profil. -->
+    <a href="profil.html" id="lien-avatar" class="bouton-avatar" aria-label="Mon profil"></a>
   </header>
 
-  <main class="contenu">
+  <main class="contenu contenu--connecte">
     <h1 class="titre-cache">Fil d'actualité</h1>
-
-    <!-- Erreurs liées au changement de photo de profil (fichier refusé, stockage plein). -->
-    <p id="message-avatar" class="message-erreur message-erreur--haut" aria-live="polite"></p>
-
-    <!-- Formulaire de publication. -->
-    <section class="carte">
-      <!--
-        SÉCURITÉ : validation HTML (maxlength="280"), revérifiée en JavaScript (validation.js) car cet attribut
-        se contourne avec F12. Pas de "required" sur le texte : il est facultatif quand une photo est choisie.
-        La règle « une photo OU un texte » est vérifiée en JavaScript (validation.js, posts.js).
-        Pas d'attribut "action" : l'envoi est géré en JS (fil.js).
-      -->
-      <form id="formulaire-post" class="formulaire">
-        <label for="image-post">Photo (facultatif)</label>
-        <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
-        <input type="file" id="image-post" name="image" accept="image/jpeg,image/png,image/webp">
-        <!-- Aperçu de la photo avant publication (caché tant qu'aucune photo n'est choisie). -->
-        <div id="zone-apercu" class="apercu" hidden>
-          <div id="apercu-photo"></div>
-          <button type="button" id="bouton-retirer-image" class="bouton bouton--danger">Retirer la photo</button>
-        </div>
-
-        <!-- Libellé changé en JS (fil.js) : « Description » quand une photo est choisie, « Quoi de neuf ? » sinon. -->
-        <label for="texte-post" id="libelle-texte-post">Quoi de neuf ?</label>
-        <textarea id="texte-post" name="texte" rows="3" maxlength="280"></textarea>
-        <div class="formulaire-pied">
-          <!-- Compteur de caractères restants, mis à jour à chaque frappe (fil.js). -->
-          <span id="compteur" class="compteur" aria-live="polite"></span>
-          <button type="submit" class="bouton bouton--principal">Publier</button>
-        </div>
-        <p id="message-publication" class="message-erreur" aria-live="polite"></p>
-      </form>
-    </section>
 
     <!-- Le fil : les posts sont construits en JS avec createElement + textContent (jamais innerHTML). -->
     <section aria-labelledby="titre-fil">
-      <h2 id="titre-fil" class="titre-section">Fil</h2>
-      <p id="message-fil" class="message-erreur" aria-live="polite"></p>
+      <h2 id="titre-fil" class="titre-section titre-section--haut">Fil</h2>
+      <!-- Erreurs liées aux likes et aux suppressions (cartes.js). -->
+      <p id="message-posts" class="message-erreur message-erreur--haut" aria-live="polite"></p>
       <div id="liste-posts"></div>
     </section>
   </main>
 
+  <!-- Bouton rond « + » toujours visible : c'est un simple lien vers la page de publication. -->
+  <a href="publier.html" class="bouton-flottant" aria-label="Publier un post">
+    <svg class="icone" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </a>
+
   <!--
     SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
     par la CSP (script-src 'self'). Placés en fin de page pour que les éléments existent déjà.
-    fil.js vérifie la session dès son chargement et redirige vers index.html si personne n'est connecté.
+    fil.js vérifie la session dès son chargement (verifierConnexion, cartes.js) et redirige vers index.html
+    si personne n'est connecté.
   -->
   <script src="js/stockage.js"></script>
   <script src="js/validation.js"></script>
   <script src="js/images.js"></script>
   <script src="js/posts.js"></script>
+  <script src="js/cartes.js"></script>
   <script src="js/fil.js"></script>
 </body>
 </html>

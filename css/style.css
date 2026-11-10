@@ -1,6 +1,6 @@
 /*
   Fichier : css/style.css
-  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 2 pages, mode sombre, version téléphone).
+  Rôle    : unique feuille de style de Loby (couleurs, police, mise en page des 4 pages, menu de navigation, mode sombre, version téléphone).
   Membre  : Membre 3 (interface)
 
   SÉCURITÉ : tous les styles sont dans ce fichier externe. La CSP (style-src 'self') interdit
@@ -41,6 +41,7 @@
   --anneau-focus-champ: rgba(47, 84, 235, 0.30); /* halo bleu autour du champ actif */
   --rayon: 16px;                            /* arrondi des cartes */
   --transition: 180ms ease;                 /* durée des petites animations de survol */
+  --hauteur-onglets: 64px;                  /* hauteur de la barre d'onglets en bas de l'écran (téléphone) */
 }
 
 /* =====================================================================
@@ -75,6 +76,8 @@ a:hover {
 
 /* Contour bien visible pour la navigation au clavier (touche Tab), sur tous les éléments cliquables. */
 a:focus-visible,
+.navigation-lien:focus-visible,
+.bouton-flottant:focus-visible,
 .bouton:focus-visible,
 .bouton-like:focus-visible,
 .bouton-avatar:focus-visible {
@@ -112,23 +115,102 @@ header.en-tete > img {
   height: 36px;
 }
 
-/* Sur le fil : logo à gauche, utilisateur à droite, alignés sur la colonne du fil (600 px). */
-.en-tete--fil {
+/* Pages connectées (fil, publier, profil) : logo et menu à gauche, avatar à droite,
+   alignés sur la colonne des posts (600 px). */
+.en-tete--connecte {
   --largeur-colonne: 600px;
-  flex-wrap: wrap;
-  justify-content: space-between;
   gap: 12px;
 }
 
-.utilisateur {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* L'avatar (lien vers le profil) est poussé tout à droite. */
+.en-tete--connecte > .bouton-avatar {
+  margin-left: auto;
 }
 
-.utilisateur-pseudo {
+/* =====================================================================
+   3 bis. Menu de navigation (Fil, Profil) et bouton « + »
+   ===================================================================== */
+
+/* Icônes SVG écrites dans le HTML : simple trait de la couleur du texte (currentColor),
+   donc elles suivent automatiquement le survol, l'onglet actif et le mode sombre. */
+.icone {
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sur ordinateur : les onglets sont dans l'en-tête, juste à côté du logo. */
+.navigation {
+  display: flex;
+  gap: 4px;
+  margin-left: 20px;
+}
+
+/* Un onglet : icône + libellé dans une pilule discrète. */
+.navigation-lien {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
   font-size: 0.95rem;
   font-weight: 600;
+  color: var(--couleur-texte-secondaire);
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.navigation-lien .icone {
+  width: 20px;
+  height: 20px;
+}
+
+.navigation-lien:hover {
+  color: var(--couleur-texte);
+  background-color: var(--couleur-surface-douce);
+}
+
+/* Onglet de la page ouverte : repéré grâce à l'attribut aria-current="page" écrit dans le HTML
+   (le même attribut sert aux lecteurs d'écran et au style : pas besoin de classe en plus). */
+.navigation-lien[aria-current="page"] {
+  color: var(--couleur-lien);
+  background-color: var(--couleur-principale-douce);
+}
+
+/* Bouton rond « + » (lien vers publier.html), toujours visible en bas à droite de l'écran. */
+.bouton-flottant {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  color: #FFFFFF;
+  background-color: var(--couleur-principale);
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(47, 84, 235, 0.40);
+  transition: background-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.bouton-flottant .icone {
+  stroke-width: 2.5;
+}
+
+/* Au survol : bleu plus foncé et léger soulèvement. */
+.bouton-flottant:hover {
+  background-color: var(--couleur-principale-foncee);
+  box-shadow: 0 10px 28px rgba(47, 84, 235, 0.45);
+  transform: translateY(-2px);
+}
+
+.bouton-flottant:active {
+  transform: scale(0.95);
 }
 
 /* =====================================================================
@@ -173,7 +255,7 @@ p.en-tete {
   background: linear-gradient(135deg, var(--couleur-principale), #1D39C4);
 }
 
-/* Bouton invisible autour de l'avatar du haut (clic = changer sa photo de profil). */
+/* Lien invisible autour de l'avatar du haut (clic = ouvrir son profil). */
 .bouton-avatar {
   display: inline-flex;
   padding: 0;
@@ -266,12 +348,17 @@ p.en-tete {
   white-space: nowrap;
 }
 
-/* Titre « Fil » au-dessus des posts. */
+/* Titre « Fil » ou « Mes posts » au-dessus des posts. */
 .titre-section {
   margin: 36px 0 14px;
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.01em;
+}
+
+/* Sur le fil, le titre est le premier élément de la page : pas besoin de grand espace au-dessus. */
+.titre-section--haut {
+  margin-top: 0;
 }
 
 /* Carte blanche arrondie avec une ombre douce (formulaires). */
@@ -391,7 +478,7 @@ p.en-tete {
   margin-top: 22px;
 }
 
-/* Ligne sous la zone de texte : compteur à gauche, bouton Publier à droite. */
+/* Ligne sous la zone de texte : compteur à gauche, boutons Annuler et Publier à droite. */
 .formulaire-pied {
   display: flex;
   align-items: center;
@@ -404,6 +491,13 @@ p.en-tete {
   font-size: 0.85rem;
   color: var(--couleur-texte-secondaire);
   font-variant-numeric: tabular-nums;       /* chiffres de même largeur : le compteur ne « saute » pas */
+}
+
+/* Annuler et Publier côte à côte. */
+.formulaire-boutons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Classe ajoutée en JS quand il reste moins de 20 caractères. */
@@ -449,6 +543,11 @@ p.en-tete {
 /* =====================================================================
    9. Boutons (forme « pilule »)
    ===================================================================== */
+
+/* Un lien qui a l'apparence d'un bouton (« Annuler » de la page Publier) : pas de soulignement. */
+a.bouton {
+  text-decoration: none;
+}
 
 .bouton {
   display: inline-flex;
@@ -644,12 +743,161 @@ p.en-tete {
 }
 
 /* =====================================================================
+   10 bis. Page Profil
+   ===================================================================== */
+
+/* Carte du profil : tout est centré, les éléments empilés les uns sous les autres. */
+.profil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+/* Grand avatar (96 px au lieu de 44 px), avec un anneau un peu plus épais. */
+.profil-avatar .avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 2.4rem;
+  box-shadow: 0 0 0 3px var(--couleur-surface), 0 0 0 6px var(--couleur-principale-douce);
+}
+
+.profil-pseudo {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+/* Le message d'erreur de la photo prend toute la largeur de la carte. */
+.profil .message-erreur {
+  align-self: stretch;
+  margin: 0;
+}
+
+/* Les deux chiffres (posts, likes reçus) côte à côte. */
+.profil-chiffres {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-self: stretch;
+  margin: 4px 0;
+}
+
+/* Une case chiffre : le nombre en grand, le libellé en petit dessous. */
+.profil-chiffre {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 160px;
+  margin: 0;
+  padding: 12px;
+  background-color: var(--couleur-surface-douce);
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 12px;
+}
+
+.profil-chiffre strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.profil-chiffre span {
+  font-size: 0.8rem;
+  color: var(--couleur-texte-secondaire);
+}
+
+/* Pages connectées : de la place en bas pour que le bouton « + » ne cache pas le dernier post. */
+.contenu--connecte {
+  padding-bottom: 112px;
+}
+
+/* =====================================================================
+   10 ter. Téléphone et petite tablette (moins de 720 px) : barre d'onglets en bas
+   ===================================================================== */
+
+@media (max-width: 719px) {
+  /* Un élément avec backdrop-filter devient le repère des éléments « position: fixed » qu'il contient :
+     la barre d'onglets resterait collée à l'en-tête au lieu du bas de l'écran. Sur téléphone, l'en-tête
+     perd donc son flou et prend un fond plein (c'est la barre d'onglets qui garde l'effet flouté). */
+  header.en-tete--connecte {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--couleur-surface);
+  }
+
+  /* Le menu devient une barre fixée en bas de l'écran, façon Instagram. */
+  .navigation {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    gap: 0;
+    margin: 0;
+    /* env(safe-area-inset-bottom) : place de la barre d'accueil de l'iPhone, pour que les onglets restent cliquables. */
+    padding-bottom: env(safe-area-inset-bottom);
+    background-color: var(--couleur-en-tete);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-top: 1px solid var(--couleur-bordure);
+  }
+
+  /* Chaque onglet prend la moitié de la largeur : icône au-dessus, libellé en dessous. */
+  .navigation-lien {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    height: var(--hauteur-onglets);
+    padding: 0;
+    font-size: 0.75rem;
+    border-radius: 0;
+  }
+
+  .navigation-lien .icone {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Pas de pilule en bas : l'onglet actif est en bleu avec une icône pleine. */
+  .navigation-lien:hover,
+  .navigation-lien[aria-current="page"] {
+    background-color: transparent;
+  }
+
+  .navigation-lien[aria-current="page"] .icone {
+    fill: currentColor;
+  }
+
+  /* Contour du focus clavier dessiné à l'intérieur de l'onglet (sinon coupé par le bord de l'écran). */
+  .navigation-lien:focus-visible {
+    outline-offset: -4px;
+  }
+
+  /* Le bouton « + » remonte au-dessus de la barre d'onglets. */
+  .bouton-flottant {
+    right: 16px;
+    bottom: calc(var(--hauteur-onglets) + 16px + env(safe-area-inset-bottom));
+  }
+
+  /* Marge en bas du contenu : barre d'onglets + bouton « + » + zone de l'iPhone, rien n'est caché derrière. */
+  .contenu--connecte {
+    padding-bottom: calc(var(--hauteur-onglets) + 96px + env(safe-area-inset-bottom));
+  }
+}
+
+/* =====================================================================
    11. Téléphone (écrans de 480 px ou moins)
    ===================================================================== */
 
 @media (max-width: 480px) {
-  /* Sur le fil, logo réduit au symbole seul (le carré du kit logo) pour laisser la place à l'utilisateur. */
-  header.en-tete--fil > img {
+  /* Sur les pages connectées, logo réduit au symbole seul (le carré du kit logo), comme une appli. */
+  header.en-tete--connecte > img {
     content: url("../assets/logo/loby-symbole-bleu.svg");
     height: 34px;
   }
@@ -707,10 +955,10 @@ p.en-tete {
   }
 }
 
-/* Fil sur téléphone en mode sombre : on garde le symbole bleu (lisible sur les deux fonds).
+/* Pages connectées sur téléphone en mode sombre : on garde le symbole bleu (lisible sur les deux fonds).
    Répété ici car la règle du mode sombre ci-dessus est écrite après celle du téléphone. */
 @media (prefers-color-scheme: dark) and (max-width: 480px) {
-  header.en-tete--fil > img {
+  header.en-tete--connecte > img {
     content: url("../assets/logo/loby-symbole-bleu.svg");
   }
 }

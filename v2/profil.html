@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  Fichier : v2/profil.html
+  Rôle    : page Profil de la version 2 de Loby (réservée aux utilisateurs connectés) : avatar et pseudo,
+            changement de photo, nombre de posts et de likes reçus, mes posts (lus dans Supabase), déconnexion.
+  Membre  : Membre 1 (comptes)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP), la même qu'en version 1 (voir ../fil.html pour le détail
+    de chaque directive), avec UNE directive en plus :
+    - connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co : fetch() ne peut contacter que notre site
+      et NOTRE projet Supabase. Si un attaquant réussissait à injecter du code, il ne pourrait pas envoyer
+      les données (jeton de connexion, posts) vers son propre serveur : le navigateur bloquerait la requête.
+    data: reste autorisé uniquement pour les images (photos en data URL), jamais pour les scripts.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby v2 — Mon profil</title>
+
+  <!-- Icônes et feuille de style de la version 1, réutilisées (chemins RELATIFS : ../ remonte d'un dossier). -->
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/favicon/site.webmanifest">
+  <meta name="theme-color" content="#2F54EB">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Bandeau de la version 2 (styles déjà existants : en-tete + aide). -->
+  <p class="en-tete aide">Version 2 : données partagées (Supabase). <a href="../index.html">Revenir à la version 1</a></p>
+
+  <!-- En-tête : logo, menu (Fil, Profil) et avatar qui mène au profil. Identique sur les 3 pages connectées. -->
+  <header class="en-tete en-tete--connecte">
+    <img src="../assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+    <!--
+      Menu principal : dans l'en-tête sur ordinateur, barre d'onglets en bas de l'écran sur téléphone (style.css).
+      aria-current="page" marque l'onglet de la page ouverte (lecteurs d'écran + style). Les icônes SVG sont
+      décoratives (aria-hidden) : le libellé écrit à côté suffit.
+    -->
+    <nav class="navigation" aria-label="Navigation principale">
+      <a href="fil.html" class="navigation-lien">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>Fil</span>
+      </a>
+      <a href="profil.html" class="navigation-lien" aria-current="page">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21a8 8 0 0 1 16 0"/>
+        </svg>
+        <span>Profil</span>
+      </a>
+    </nav>
+    <!-- Avatar de l'utilisateur connecté (rempli en JS par js/cartes.js) : lien vers son profil. -->
+    <a href="profil.html" id="lien-avatar" class="bouton-avatar" aria-label="Mon profil"></a>
+  </header>
+
+  <main class="contenu contenu--connecte">
+    <!-- Carte du profil : avatar, pseudo, chiffres et boutons (remplis en JS par js/profil.js, avec textContent). -->
+    <section class="carte profil">
+      <div id="profil-avatar" class="profil-avatar"></div>
+      <h1 id="profil-pseudo" class="profil-pseudo"></h1>
+      <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+      <input type="file" id="champ-avatar" accept="image/jpeg,image/png,image/webp" hidden>
+      <button type="button" id="bouton-avatar" class="bouton bouton--secondaire">Changer ma photo</button>
+      <!-- Erreurs liées au changement de photo de profil (fichier refusé, refus du serveur). -->
+      <p id="message-avatar" class="message-erreur" aria-live="polite"></p>
+
+      <div class="profil-chiffres">
+        <p class="profil-chiffre"><strong id="nombre-posts">0</strong> <span>Posts</span></p>
+        <p class="profil-chiffre"><strong id="nombre-likes">0</strong> <span>Likes reçus</span></p>
+      </div>
+
+      <button type="button" id="bouton-deconnexion" class="bouton bouton--secondaire">Se déconnecter</button>
+    </section>
+
+    <!-- Mes posts : construits en JS avec createElement + textContent (jamais innerHTML), comme dans le fil. -->
+    <section aria-labelledby="titre-mes-posts">
+      <h2 id="titre-mes-posts" class="titre-section">Mes posts</h2>
+      <!-- Erreurs liées aux likes et aux suppressions (js/cartes.js). -->
+      <p id="message-posts" class="message-erreur message-erreur--haut" aria-live="polite"></p>
+      <div id="liste-posts"></div>
+    </section>
+  </main>
+
+  <!-- Bouton rond « + » toujours visible : c'est un simple lien vers la page de publication. -->
+  <a href="publier.html" class="bouton-flottant" aria-label="Publier un post">
+    <svg class="icone" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </a>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). validation.js et images.js sont ceux de la version 1, réutilisés sans copie.
+    js/profil.js vérifie la session dès son chargement (verifierConnexion, js/cartes.js) et redirige
+    vers index.html si personne n'est connecté.
+  -->
+  <script src="../js/validation.js"></script>
+  <script src="../js/images.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/cartes.js"></script>
+  <script src="js/profil.js"></script>
+</body>
+</html>

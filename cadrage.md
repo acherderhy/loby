@@ -15,7 +15,7 @@ d'expliquer chaque protection et l'attaque qu'elle bloque.
 | Rôle | Ce qu'il peut faire |
 |---|---|
 | **Visiteur** (non connecté) | Créer un compte, se connecter. Il ne peut pas voir le fil. |
-| **Utilisateur connecté** | Voir le fil, publier un post (avec une photo facultative), supprimer **ses propres** posts, liker / retirer son like, changer sa photo de profil, se déconnecter. |
+| **Utilisateur connecté** | Voir le fil, publier un post (avec une photo facultative), supprimer **ses propres** posts, liker / retirer son like, voir son profil et y changer sa photo, se déconnecter. |
 
 Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer le post d'un autre.
 
@@ -24,9 +24,11 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 ### Fonctionnalité 1 — Comptes
 - **Inscription** avec un pseudo (3 à 20 caractères : lettres, chiffres, `_`) et un mot de passe (8 à 64 caractères).
 - **Connexion** avec le pseudo et le mot de passe.
-- **Déconnexion**.
-- **Photo de profil** facultative : choisie à l'inscription, modifiable depuis le fil en cliquant sur son avatar.
+- **Déconnexion** (depuis la page Profil).
+- **Photo de profil** facultative : choisie à l'inscription, modifiable depuis la page Profil.
   Sans photo, l'avatar affiche l'initiale du pseudo (en CSS, sans image).
+- **Page Profil** (`profil.html`) : son avatar, son pseudo, son nombre de posts et de likes reçus, et la liste de ses
+  propres posts (avec like et suppression, comme dans le fil). Elle fait partie de cette fonctionnalité, ce n'est pas une 4e fonctionnalité.
 - Protections : mot de passe haché avec PBKDF2 (600 000 itérations) + sel aléatoire ; hachages comparés
   en temps constant (contre les attaques temporelles) ; message d'erreur générique
   « Identifiants incorrects » ; blocage de 30 secondes après 5 échecs ; seul l'identifiant
@@ -34,6 +36,7 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 
 ### Fonctionnalité 2 — Posts
 - **Publier** un post avec une photo, un texte (280 caractères maximum) ou les deux (photo en haut, description en dessous) ; un post vide est refusé.
+  La publication se fait sur la page **Publier** (`publier.html`), ouverte par un bouton rond « + » toujours visible ; après publication, retour au fil.
 - **Photo** facultative (une seule par post), avec un aperçu avant publication et un bouton pour la retirer.
 - **Supprimer** uniquement ses propres posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler).
 - Protections : validation de la longueur (HTML + JS) ; avant chaque suppression, le code vérifie
@@ -52,12 +55,15 @@ Il n'y a **pas d'administrateur** ni de modérateur : personne ne peut supprimer
 ### Fonctionnalité 3 — Fil d'actualité
 - Affiche les posts de **tous les comptes**, **les plus récents en haut**.
 - **Liker** un post et **retirer son like** (un seul like par utilisateur et par post).
+- Navigation entre les pages connectées : menu **Fil / Profil** (dans l'en-tête sur ordinateur, barre d'onglets en bas
+  de l'écran sur téléphone).
 - Protections : le texte des posts est affiché avec `textContent` (jamais `innerHTML`),
   ce qui empêche un post contenant du code HTML ou JavaScript de s'exécuter (XSS).
 
-### Protections communes aux deux pages
+### Protections communes à toutes les pages
 - Content-Security-Policy stricte : seuls les fichiers du site peuvent être chargés,
   aucun script ni style inline, pas d'`eval`.
+- Les 3 pages connectées (fil, publier, profil) renvoient vers la connexion si personne n'est connecté.
 - `referrer` désactivé, chemins relatifs, aucune ressource externe.
 
 ## 4) Ce qu'on ne fait pas aujourd'hui, et pourquoi
@@ -118,7 +124,7 @@ Il faudrait un serveur et du chiffrement.
 
 | Technologie | Rôle | Pourquoi |
 |---|---|---|
-| **HTML5** | Structure des 2 pages | Contrainte du projet ; les attributs `required`, `minlength`, `maxlength`, `pattern`, `autocomplete` donnent une première validation gratuite. |
+| **HTML5** | Structure des 4 pages (connexion, fil, publier, profil) | Contrainte du projet ; les attributs `required`, `minlength`, `maxlength`, `pattern`, `autocomplete` donnent une première validation gratuite. |
 | **CSS3** | Mise en forme (1 seul fichier) | Contrainte du projet ; un fichier externe est compatible avec une CSP qui interdit les styles inline. |
 | **JavaScript vanilla** | Logique de l'application | Contrainte du projet ; sans librairie, on comprend et on maîtrise tout le code, et aucune dépendance externe ne peut être compromise. |
 | **localStorage** | Stockage des comptes, posts et likes | Seul moyen de garder des données sans backend ; elles restent après la fermeture du navigateur. |
@@ -132,10 +138,10 @@ Il faudrait un serveur et du chiffrement.
 
 | Membre | Responsabilité | Fichiers |
 |---|---|---|
-| **Membre 1** | Comptes (inscription, connexion, déconnexion, limitation des tentatives) et hachage des mots de passe | `js/hachage.js`, `js/comptes.js` |
-| **Membre 2** | Posts (publier, supprimer), contrôle d'autorisation et sécurité des photos (vérification, redessin, affichage) | `js/posts.js`, `js/images.js` |
-| **Membre 3** | Fil d'actualité, likes, interface et anti-XSS | `js/fil.js`, `css/style.css`, `fil.html` |
-| **Membre 4** | CSP, validation globale des saisies, README et cadrage | `js/validation.js`, `index.html` (en-têtes de sécurité des 2 pages), `README.md`, `cadrage.md` |
+| **Membre 1** | Comptes (inscription, connexion, déconnexion, limitation des tentatives, page Profil) et hachage des mots de passe | `js/hachage.js`, `js/comptes.js`, `js/profil.js`, `profil.html` |
+| **Membre 2** | Posts (page Publier, supprimer), contrôle d'autorisation et sécurité des photos (vérification, redessin, affichage) | `js/posts.js`, `js/images.js`, `js/publier.js`, `publier.html` |
+| **Membre 3** | Fil d'actualité, likes, navigation, interface et anti-XSS | `js/cartes.js`, `js/fil.js`, `css/style.css`, `fil.html` |
+| **Membre 4** | CSP, validation globale des saisies, README et cadrage | `js/validation.js`, `index.html` (en-têtes de sécurité des 4 pages), `README.md`, `cadrage.md` |
 
 Le fichier `js/stockage.js` (lecture/écriture des données et de la session) est commun : il est écrit en premier,
 ensemble, car toutes les fonctionnalités en dépendent.

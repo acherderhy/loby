@@ -18,6 +18,8 @@ Le site sera publié sur **GitHub Pages, dans un sous-dossier** : il faut donc d
 loby/
 ├── index.html          Page de connexion / inscription (page d'accueil).
 ├── fil.html            Page du fil d'actualité (accessible une fois connecté).
+├── publier.html        Page de publication d'un post (ouverte par le bouton « + »).
+├── profil.html         Page Profil : avatar, pseudo, chiffres, mes posts, déconnexion.
 ├── css/style.css       Unique feuille de style.
 ├── js/
 │   ├── stockage.js     Lecture/écriture localStorage (utilisateurs, posts) + session sessionStorage.  (commun)
@@ -26,31 +28,40 @@ loby/
 │   ├── comptes.js      Inscription, connexion, limitation des tentatives (sur index.html).             (Membre 1)
 │   ├── images.js       Vérification des photos (type, signature, 5 Mo), redessin canvas → JPEG, affichage. (Membre 2)
 │   ├── posts.js        Publier un post, supprimer un de ses posts (contrôle d'autorisation).           (Membre 2)
-│   └── fil.js          Affichage du fil, likes, confirmation de suppression, photos, déconnexion.      (Membre 3)
+│   ├── cartes.js       Session des pages connectées, avatar d'en-tête, cartes de posts, likes, suppression. (Membre 3)
+│   ├── fil.js          Page du fil : tous les posts, les plus récents en haut.                         (Membre 3)
+│   ├── publier.js      Page Publier : formulaire, aperçu de la photo, compteur, retour au fil.         (Membre 2)
+│   └── profil.js       Page Profil : photo de profil, chiffres, mes posts, déconnexion.                (Membre 1)
 ├── assets/logo/        Logos SVG.
 ├── assets/favicon/     Favicons + site.webmanifest (chemins relatifs).
 ├── assets/README-logo.md
 ├── prompts/            Prompts donnés à Claude Code à chaque étape (+ README.md).
 ├── docs/               Fiches d'oral (oral-membre-1.md à oral-membre-4.md) et scénario de démo (demo.md).
 ├── v2/                 BONUS : version 2 branchée sur Supabase (ne pas toucher à la v1 pour la v2).
-│   ├── index.html, fil.html   Mêmes pages, CSP + connect-src vers Supabase, bandeau « Version 2 ».
+│   ├── index.html, fil.html, publier.html, profil.html   Mêmes pages, CSP + connect-src vers Supabase, bandeau « Version 2 ».
 │   ├── js/config.js    SUPABASE_URL et clé anon (publique). Jamais la clé service_role.
 │   ├── js/supabase.js  Session (jeton) + fonctions fetch : inscrire, connecter, deconnecter, lire, ajouter, supprimer, modifier.
 │   ├── js/comptes.js   Inscription / connexion via Supabase.
-│   ├── js/fil.js       Fil, publication, suppression, likes, avatar, déconnexion via Supabase.
+│   ├── js/cartes.js    Session (verifierConnexion), cartes de posts, likes, suppression via Supabase.
+│   ├── js/fil.js       Fil : tous les posts.
+│   ├── js/publier.js   Publication (publierPost) via Supabase.
+│   ├── js/profil.js    Profil : avatar, chiffres, mes posts (filtre auteur_id), déconnexion.
 │   ├── supabase.sql    Tables, règles RLS, droits, trigger (exécuté une fois dans Supabase).
 │   └── README.md
 ├── CLAUDE.md, cadrage.md, README.md, SECURITE.md, .gitignore
 ```
 
 La v2 réutilise `../css/style.css`, `../assets/`, `../js/validation.js` et `../js/images.js`.
-Ordre de chargement v2 : validation.js → images.js → config.js → supabase.js → comptes.js (ou fil.js).
+Ordre de chargement v2 : validation.js → images.js → config.js → supabase.js → comptes.js (index.html),
+ou → cartes.js → fil.js / publier.js / profil.js (pages connectées).
 
 Ordre de chargement des scripts (en bas du `<body>`, avec `<script src="...">` uniquement) :
 - `index.html` : stockage.js → validation.js → hachage.js → images.js → comptes.js
-- `fil.html` : stockage.js → validation.js → images.js → posts.js → fil.js
+- `fil.html` : stockage.js → validation.js → images.js → posts.js → cartes.js → fil.js
+- `publier.html` : stockage.js → validation.js → images.js → posts.js → cartes.js → publier.js
+- `profil.html` : stockage.js → validation.js → images.js → posts.js → cartes.js → profil.js
 
-Limites : **2 pages HTML, 1 fichier CSS, 7 fichiers JS maximum.**
+Limites : **4 pages HTML, 1 fichier CSS, 10 fichiers JS maximum** (v2 : 4 pages HTML, 7 fichiers JS dans `v2/js/`).
 
 ## 3. Contraintes du prof (non négociables)
 
@@ -65,12 +76,16 @@ Limites : **2 pages HTML, 1 fichier CSS, 7 fichiers JS maximum.**
 ## 4. Les 3 fonctionnalités (pas une de plus)
 
 1. **Comptes** : inscription, connexion, déconnexion, photo de profil facultative (choisie à l'inscription,
-   modifiable depuis le fil ; sinon avatar avec l'initiale du pseudo).
-2. **Posts** : publier un post (280 caractères max, avec une photo facultative), supprimer **uniquement ses propres**
+   modifiable depuis la page Profil ; sinon avatar avec l'initiale du pseudo). La page Profil (avatar, pseudo,
+   nombre de posts et de likes reçus, mes posts) fait partie de cette fonctionnalité.
+2. **Posts** : publier un post sur la page Publier (bouton « + » ; 280 caractères max, avec une photo facultative), supprimer **uniquement ses propres**
    posts, après confirmation dans la carte du post (« Supprimer ce post ? » Oui / Annuler, pas de `confirm()`).
 3. **Fil d'actualité** : posts de tous les comptes, **les plus récents en haut**, avec like / retirer son like.
 
-Hors périmètre : plusieurs photos par post, vidéos, abonnements, messages privés, modification de post, profil, recherche, commentaires, etc.
+Hors périmètre : plusieurs photos par post, vidéos, abonnements, messages privés, modification de post, profil des autres utilisateurs, recherche, commentaires, etc.
+
+Navigation : menu Fil / Profil (`<nav aria-label="Navigation principale">`, `aria-current="page"` écrit dans le HTML),
+en barre d'onglets fixée en bas sous 720 px ; bouton rond « + » (lien vers `publier.html`) sur le fil et le profil.
 
 ## 5. Règles de simplicité (aussi importantes que la sécurité)
 
@@ -159,7 +174,7 @@ Les mêmes règles dans les attributs HTML et re-vérifiées en JS dans `validat
 - **Message d'erreur générique** : « Identifiants incorrects », que le pseudo existe ou non.
 - **Limitation des tentatives** : connexion bloquée **30 secondes après 5 échecs**.
 - **Session** : on ne stocke dans `sessionStorage` **que l'identifiant de l'utilisateur connecté**, jamais le mot de passe ni le hash.
-- `fil.html` redirige vers `index.html` si personne n'est connecté.
+- `fil.html`, `publier.html` et `profil.html` redirigent vers `index.html` si personne n'est connecté (`verifierConnexion`, `cartes.js`).
 
 ### Autorisation
 - Avant **toute suppression**, vérifier dans le code que l'utilisateur connecté **est bien l'auteur** du post

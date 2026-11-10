@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  Fichier : v2/publier.html
+  Rôle    : page de publication de la version 2 de Loby (réservée aux utilisateurs connectés) : formulaire
+            d'un nouveau post (photo facultative), envoyé à Supabase. Retour au fil après publication.
+  Membre  : Membre 2 (posts et photos)
+-->
+<html lang="fr">
+<head>
+  <!-- Encodage des caractères : doit être la toute première balise pour bien afficher les accents. -->
+  <meta charset="UTF-8">
+
+  <!--
+    SÉCURITÉ : Content-Security-Policy (CSP), la même qu'en version 1 (voir ../fil.html pour le détail
+    de chaque directive), avec UNE directive en plus :
+    - connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co : fetch() ne peut contacter que notre site
+      et NOTRE projet Supabase. Si un attaquant réussissait à injecter du code, il ne pourrait pas envoyer
+      les données (jeton de connexion, posts) vers son propre serveur : le navigateur bloquerait la requête.
+    data: reste autorisé uniquement pour les images (photos en data URL), jamais pour les scripts.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://tcskegpdoldosfefhmvy.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+
+  <!-- Adapte l'affichage à la largeur de l'écran (téléphones). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SÉCURITÉ : n'envoie jamais l'adresse de notre page aux autres sites (fuite d'informations via l'en-tête Referer). -->
+  <meta name="referrer" content="no-referrer">
+
+  <title>Loby v2 — Publier</title>
+
+  <!-- Icônes et feuille de style de la version 1, réutilisées (chemins RELATIFS : ../ remonte d'un dossier). -->
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="../assets/favicon/site.webmanifest">
+  <meta name="theme-color" content="#2F54EB">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <!-- Bandeau de la version 2 (styles déjà existants : en-tete + aide). -->
+  <p class="en-tete aide">Version 2 : données partagées (Supabase). <a href="../index.html">Revenir à la version 1</a></p>
+
+  <!-- En-tête : logo, menu (Fil, Profil) et avatar qui mène au profil. Identique sur les 3 pages connectées. -->
+  <header class="en-tete en-tete--connecte">
+    <img src="../assets/logo/loby-horizontal-bleu.svg" alt="Loby" height="40">
+    <!--
+      Menu principal : dans l'en-tête sur ordinateur, barre d'onglets en bas de l'écran sur téléphone (style.css).
+      aria-current="page" marque l'onglet de la page ouverte (lecteurs d'écran + style). Les icônes SVG sont
+      décoratives (aria-hidden) : le libellé écrit à côté suffit.
+    -->
+    <nav class="navigation" aria-label="Navigation principale">
+      <a href="fil.html" class="navigation-lien">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>Fil</span>
+      </a>
+      <a href="profil.html" class="navigation-lien">
+        <svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21a8 8 0 0 1 16 0"/>
+        </svg>
+        <span>Profil</span>
+      </a>
+    </nav>
+    <!-- Avatar de l'utilisateur connecté (rempli en JS par js/cartes.js) : lien vers son profil. -->
+    <a href="profil.html" id="lien-avatar" class="bouton-avatar" aria-label="Mon profil"></a>
+  </header>
+
+  <main class="contenu contenu--connecte">
+    <section class="carte" aria-labelledby="titre-publier">
+      <h1 id="titre-publier" class="carte-titre">Nouveau post</h1>
+      <!--
+        SÉCURITÉ : validation HTML (maxlength="280"), revérifiée en JavaScript (../js/validation.js)
+        puis par la base (contraintes check : 280 caractères maximum, post vide refusé).
+        Pas d'attribut "action" : l'envoi est géré en JS (js/publier.js).
+      -->
+      <form id="formulaire-post" class="formulaire">
+        <label for="image-post">Photo (facultatif)</label>
+        <!-- SÉCURITÉ : accept limite le choix aux JPEG, PNG et WebP ; images.js revérifie tout (type, octets, poids). -->
+        <input type="file" id="image-post" name="image" accept="image/jpeg,image/png,image/webp">
+        <!-- Aperçu de la photo avant publication (caché tant qu'aucune photo n'est choisie). -->
+        <div id="zone-apercu" class="apercu" hidden>
+          <div id="apercu-photo"></div>
+          <button type="button" id="bouton-retirer-image" class="bouton bouton--danger">Retirer la photo</button>
+        </div>
+
+        <!-- Libellé changé en JS (js/publier.js) : « Description » quand une photo est choisie, « Quoi de neuf ? » sinon. -->
+        <label for="texte-post" id="libelle-texte-post">Quoi de neuf ?</label>
+        <textarea id="texte-post" name="texte" rows="3" maxlength="280"></textarea>
+        <div class="formulaire-pied">
+          <!-- Compteur de caractères restants, mis à jour à chaque frappe (js/publier.js). -->
+          <span id="compteur" class="compteur" aria-live="polite"></span>
+          <div class="formulaire-boutons">
+            <!-- Annuler : simple lien qui ramène au fil, rien n'est publié. -->
+            <a href="fil.html" class="bouton bouton--petit">Annuler</a>
+            <button type="submit" id="bouton-publier" class="bouton bouton--principal">Publier</button>
+          </div>
+        </div>
+        <p id="message-publication" class="message-erreur" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <!--
+    SÉCURITÉ : scripts uniquement dans des fichiers .js séparés (aucun <script> inline), seul cas autorisé
+    par la CSP (script-src 'self'). validation.js et images.js sont ceux de la version 1, réutilisés sans copie.
+    js/publier.js vérifie la session dès son chargement (verifierConnexion, js/cartes.js) et redirige
+    vers index.html si personne n'est connecté.
+  -->
+  <script src="../js/validation.js"></script>
+  <script src="../js/images.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/cartes.js"></script>
+  <script src="js/publier.js"></script>
+</body>
+</html>
